@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --color-linho: #fbf9f5;
+  --color-creme: #f3eee6;
+  --color-areia: #e8e0d3;
+  --color-estudio: #ebe6dc;
+  --color-musgo: #2d3a2e;
+  --color-musgo-escuro: #1f2920;
+  --color-salvia: #8a9a7b;
+  --color-terracota: #b0603a;
+  --color-terracota-escuro: #934c2c;
+  /* Destaque sobre fundos escuros. As cores acima são trocadas em src/lib/marca.ts quando o visitante personaliza o site. */
+  --color-destaque-claro: #d9a27f;
+  --color-tinta: #1c1e1a;
+  --color-pedra: #5d5850;
+
+  --font-display: "DM Serif Display", ui-serif, Georgia, serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-linho font-sans text-[15px] text-tinta antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-normal tracking-[-0.015em];
+  }
+
+  ::selection {
+    @apply bg-terracota text-linho;
+  }
+}
+
+@utility eyebrow {
+  @apply text-[11px] font-bold tracking-[0.2em] uppercase;
+}
+
+@utility botao {
+  @apply inline-flex items-center justify-center gap-2.5 rounded-full px-6 py-3.5 text-sm font-semibold transition duration-300;
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animar-surgir {
+  animation: surgir 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.visualizador-3d {
+  --poster-color: transparent;
+  --progress-bar-color: var(--color-terracota);
+  background: var(--color-estudio);
+}
+
+/* Controles que só aparecem durante a sessão de RA (WebXR no Android). */
+.so-ra {
+  display: none;
+}
+
+model-viewer[ar-status="session-started"] .so-ra {
+  display: flex;
+}

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { buscarMovel, type Movel } from '../data/moveis'
 import { dominio, temNomeProprio, useMarca } from '../lib/marca'
-import { hrefMovel } from '../router'
+import imagemSala from '../assets/ambiente-sala.jpg'
+import { hrefAmbiente, hrefMovel } from '../router'
 import { FotoMovel } from './FotoMovel'
 import { Camera, Check, Cubo, Planta, Sacola } from './Icones'
 import { SeletorCores } from './SeletorCores'
@@ -153,16 +154,17 @@ export function MockupConversa({ movel }: { movel: Movel }) {
 }
 
 /**
- * Peças da sala de exemplo. Largura e posição em % do palco (4:3), calculadas pelas medidas reais
- * de cada peça para ficarem em escala entre si. Ordem = de trás para a frente.
+ * Peças da sala de exemplo, nas cores da imagem. A imagem é um quadro do próprio ambiente 3D
+ * (cômodo de 4,2 × 3,6 m, parede verde musgo, piso carvalho) com estas peças.
  */
 const pecasSala = [
-  { slug: 'vaso-ficus', cor: 0, left: -6, top: 23, width: 33 },
-  { slug: 'sofa-couro', cor: 2, left: 14, top: 23.6, width: 40 },
-  { slug: 'mesinha-madeira', cor: 0, left: 52, top: 50.8, width: 15.5 },
-  { slug: 'abajur-madeira', cor: 0, left: 56, top: 42, width: 7.6 },
-  { slug: 'poltrona-couro', cor: 0, left: 62, top: 55.4, width: 29 },
+  { slug: 'vaso-ficus', cor: 2, qtd: 1 },
+  { slug: 'sofa-couro', cor: 2, qtd: 1 },
+  { slug: 'mesinha-madeira', cor: 0, qtd: 1 },
+  { slug: 'abajur-madeira', cor: 0, qtd: 1 },
+  { slug: 'poltrona-couro', cor: 1, qtd: 2 },
 ].map((p) => ({ ...p, movel: buscarMovel(p.slug)! }))
+const totalPecas = pecasSala.reduce((n, p) => n + p.qtd, 0)
 
 /** O cômodo que o cliente montou com as peças da loja, ao lado da lista pronta para comprar de uma vez. */
 export function MockupAmbiente() {
@@ -170,52 +172,29 @@ export function MockupAmbiente() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[#b9c4ae]">
-        <div aria-hidden className="absolute inset-x-0 top-[62%] h-[2.2%] bg-[#f3eee6]/80" />
-        <div
-          aria-hidden
-          className="absolute inset-x-[-30%] top-[64%] bottom-[-40%] origin-top [transform:perspective(700px)_rotateX(58deg)]"
-          style={{
-            background:
-              'repeating-linear-gradient(90deg, #b98a5a 0 3.4%, #a87b4e 3.4% 3.55%), linear-gradient(#b98a5a, #a87b4e)',
-          }}
+      <a href={hrefAmbiente} className="group relative block aspect-[4/3] overflow-hidden rounded-[28px] bg-[#5f6b56]">
+        <img
+          src={imagemSala}
+          alt={`Sala de estar montada em 3D com ${pecasSala.map((p) => p.movel.nome).join(', ')}`}
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
         />
-        <div aria-hidden className="absolute inset-x-0 top-[64%] bottom-0 bg-gradient-to-b from-black/15 to-transparent" />
-        <div aria-hidden className="absolute top-[71%] left-[17%] h-[15%] w-[56%] rounded-[50%] bg-[#ece4d6]/90 shadow-[0_6px_18px_-8px_rgba(0,0,0,0.35)]" />
-        <div aria-hidden className="absolute top-[17%] left-[25%] flex w-[19%] gap-[8%]">
-          <span className="aspect-[3/4] flex-1 rounded-md border-[5px] border-[#f3eee6] bg-[linear-gradient(160deg,#c27a58_0_45%,#e6dccb_45%)] shadow-md" />
-          <span className="aspect-[3/4] flex-1 rounded-md border-[5px] border-[#f3eee6] bg-[radial-gradient(circle_at_50%_60%,#5f6b56_0_30%,#e6dccb_31%)] shadow-md" />
-        </div>
-
-        {pecasSala.map((p) => {
-          const c = p.movel.cores[p.cor]
-          return (
-            <img
-              key={p.slug}
-              src={c.imagem ?? p.movel.imagem}
-              alt={`${p.movel.nome} na cor ${c.nome}`}
-              loading="lazy"
-              className="absolute aspect-[4/5]"
-              style={{ left: `${p.left}%`, top: `${p.top}%`, width: `${p.width}%` }}
-            />
-          )
-        })}
 
         <span className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-linho/90 px-3.5 py-2 text-[11px] font-bold shadow-lg backdrop-blur md:top-6 md:left-6 md:text-xs">
           <Planta className="size-4 text-terracota" /> Sala de estar · 4,2 × 3,6 m
         </span>
         <div className="absolute top-4 right-4 hidden items-center gap-2 rounded-full bg-linho/90 py-1.5 pr-3.5 pl-1.5 text-xs font-bold shadow-lg backdrop-blur sm:flex md:top-6 md:right-6">
           <span className="flex -space-x-1.5">
-            {['#b9c4ae', '#b98a5a'].map((hex) => (
+            {['#5f6b56', '#b98a5a'].map((hex) => (
               <span key={hex} className="size-6 rounded-full border-2 border-linho" style={{ backgroundColor: hex }} />
             ))}
           </span>
-          Parede sálvia · Piso carvalho
+          Parede verde musgo · Piso carvalho
         </div>
         <span className="absolute bottom-4 left-4 inline-flex items-center gap-2 rounded-full bg-tinta/80 px-3.5 py-2 text-[11px] font-bold text-linho backdrop-blur md:bottom-6 md:left-6 md:text-xs">
-          <Cubo className="size-4" /> Arraste para girar o cômodo
+          <Cubo className="size-4" /> Monte o seu em 3D
         </span>
-      </div>
+      </a>
 
       <div className={`flex flex-col rounded-[28px] bg-linho p-5 md:p-7 ${sombra}`}>
         <div className="flex items-center justify-between gap-3">
@@ -225,7 +204,7 @@ export function MockupAmbiente() {
             </p>
             <p className="mt-1 font-display text-[26px] leading-tight">Sala de estar</p>
           </div>
-          <span className="rounded-full bg-creme px-3 py-1.5 text-xs font-bold">{pecasSala.length} peças</span>
+          <span className="rounded-full bg-creme px-3 py-1.5 text-xs font-bold">{totalPecas} peças</span>
         </div>
 
         <ul className="mt-5 space-y-2">
@@ -243,7 +222,10 @@ export function MockupAmbiente() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold">{p.movel.nome}</p>
-                  <p className="text-xs font-semibold text-pedra">{p.movel.cores[p.cor].nome}</p>
+                  <p className="text-xs font-semibold text-pedra">
+                    {p.movel.cores[p.cor].nome}
+                    {p.qtd > 1 && ` · ${p.qtd} unidades`}
+                  </p>
                 </div>
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-musgo text-linho">
                   <Check className="size-3.5" />

@@ -9,6 +9,7 @@ import { asperezaPiso, desenharPiso, tamanhoPiso } from './texturasPiso'
 import {
   AREA_USO,
   areasPortas,
+  cabeNasParedes,
   caixa,
   dentro,
   dentroDaPegada,
@@ -388,6 +389,8 @@ export class CenaAmbiente {
       if (!arrastado && item.x != null && item.y != null) o.grupo.position.set(item.x * M, (item.elevacao ?? 0) * M, item.y * M)
       o.grupo.rotation.y = (-item.giro * Math.PI) / 180
       o.grupo.visible = item.x != null
+      // Girar perto da parede (ou encolher o cômodo) pode deixar o móvel atravessando: empurra para dentro.
+      if (!arrastado && item.x != null) this.encaixar(o)
     }
     this.atualizarSituacoes()
   }
@@ -445,7 +448,7 @@ export class CenaAmbiente {
         const lugar = this.acharLugar(o)
         o.grupo.position.set(lugar.x * M, (o.item.elevacao ?? 0) * M, lugar.y * M)
         this.cb.aoPosicionar(item.id, lugar.x, lugar.y)
-      }
+      } else this.encaixar(o)
       grupo.visible = true
       this.atualizarSituacoes()
     })
@@ -456,6 +459,61 @@ export class CenaAmbiente {
     if (!o.meia) return null
     const base = o.grupo.position.y / M
     return { x, y, meiaL: o.meia.l, meiaP: o.meia.p, giro: o.item.giro, base, topo: base + o.altura / M }
+  }
+
+  /** O móvel cabe entre as paredes em (x, y). Antes de o modelo carregar não há medida para testar. */
+  private cabe(o: Objeto, x: number, y: number) {
+    const p = this.pegada(o, x, y)
+    return !p || !this.geo || cabeNasParedes(p, this.geo)
+  }
+
+  /** Anda de `de` em direção a `para` até onde as paredes deixam (`de` precisa caber). */
+  private ateAParede(o: Objeto, de: Ponto, para: Ponto): Ponto {
+    const ponto = (t: number) => ({ x: de.x + (para.x - de.x) * t, y: de.y + (para.y - de.y) * t })
+    if (this.cabe(o, para.x, para.y)) return para
+    let [ok, bate] = [0, 1]
+    for (let i = 0; i < 14; i++) {
+      const t = (ok + bate) / 2
+      const p = ponto(t)
+      if (this.cabe(o, p.x, p.y)) ok = t
+      else bate = t
+    }
+    return ponto(ok)
+  }
+
+  /**
+   * Destino do arraste sem atravessar parede: vai em linha reta até encostar e depois desliza
+   * rente à parede no eixo que ainda tem espaço. Fora do cômodo (planta encolhida), anda livre.
+   */
+  private limitar(o: Objeto, de: Ponto, para: Ponto): Ponto {
+    if (!this.cabe(o, de.x, de.y)) return para
+    let p = this.ateAParede(o, de, para)
+    p = this.ateAParede(o, p, { x: para.x, y: p.y })
+    return this.ateAParede(o, p, { x: p.x, y: para.y })
+  }
+
+  /** Se o móvel atravessa uma parede, leva para o lugar mais próximo onde ele cabe inteiro. */
+  private encaixar(o: Objeto) {
+    const x = o.grupo.position.x / M
+    const y = o.grupo.position.z / M
+    if (this.cabe(o, x, y)) return
+    const mover = (p: Ponto) => {
+      o.grupo.position.x = p.x * M
+      o.grupo.position.z = p.y * M
+      this.cb.aoPosicionar(o.item.id, p.x, p.y)
+    }
+    // Começa de 1 cm: o arraste para rente à parede e o arredondamento ao salvar pode passar um pouquinho.
+    for (let r = 1; r <= 150; r += r < 5 ? 1 : 5) {
+      const passos = Math.max(8, Math.round((2 * Math.PI * r) / 5))
+      for (let i = 0; i < passos; i++) {
+        const a = (i / passos) * 2 * Math.PI
+        const p = { x: Math.round(x + Math.cos(a) * r), y: Math.round(y + Math.sin(a) * r) }
+        if (this.cabe(o, p.x, p.y)) return mover(p)
+      }
+    }
+    // Longe demais do cômodo: procura um lugar do zero.
+    const lugar = this.acharLugar(o)
+    if (this.cabe(o, lugar.x, lugar.y)) mover(lugar)
   }
 
   /** Altura (cm) onde o móvel fica se for solto em (x, y): no tampo do apoio mais alto embaixo dele, ou no chão. */
@@ -647,9 +705,14 @@ export class CenaAmbiente {
     const ponto = this.pontoNoChao(e)
     if (!ponto) return
     const o = this.objetos.get(a.id)!
-    const x = ponto.x + a.desvio.x
-    const z = ponto.z + a.desvio.z
-    const y = this.alturaDeApoio(o, x / M, z / M, a.carona.map((c) => c.o)) * M
+    const destino = this.limitar(
+      o,
+      { x: o.grupo.position.x / M, y: o.grupo.position.z / M },
+      { x: (ponto.x + a.desvio.x) / M, y: (ponto.z + a.desvio.z) / M },
+    )
+    const x = destino.x * M
+    const z = destino.y * M
+    const y = this.alturaDeApoio(o, destino.x, destino.y, a.carona.map((c) => c.o)) * M
     o.grupo.position.set(x, y, z)
     for (const c of a.carona) c.o.grupo.position.set(x + c.dx, y + c.dy, z + c.dz)
     this.atualizarSituacoes()

@@ -347,6 +347,9 @@ const cabeNoComodo = (ret: Ponto[], contorno: Ponto[]) =>
     return contorno.some((c, j) => cruzam(p, q, c, contorno[(j + 1) % contorno.length]))
   })
 
+/** O móvel fica todo do lado de dentro das paredes. */
+export const cabeNasParedes = (alvo: Pegada, geo: Geometria) => cabeNoComodo(vertices(alvo), geo.contorno)
+
 /** Área livre que cada porta precisa, do lado de dentro. */
 export const areasPortas = (planta: Planta, geo: Geometria) =>
   planta.portas.flatMap((porta) => {

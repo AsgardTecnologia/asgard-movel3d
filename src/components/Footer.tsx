@@ -10,13 +10,13 @@ export function Footer() {
 
   return (
     <footer id="contato" className="scroll-mt-20 overflow-hidden bg-musgo-escuro text-linho/75">
-      <div className="mx-auto grid max-w-[1400px] gap-12 px-5 pt-20 pb-12 md:grid-cols-[1.5fr_1fr_1fr_1.2fr] md:px-8">
-        <div>
+      <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-x-6 gap-y-10 px-5 pt-14 pb-10 md:grid-cols-[1.5fr_1fr_1fr_1.2fr] md:gap-12 md:px-8 md:pt-20 md:pb-12">
+        <div className="col-span-2 md:col-span-1">
           <p className="flex items-baseline gap-1.5 font-display text-[28px] leading-none text-linho">
             {marca.nome}
             <span className="size-1.5 rounded-full bg-terracota" />
           </p>
-          <p className="mt-5 max-w-xs font-display text-3xl leading-tight text-linho/85">
+          <p className="mt-5 max-w-xs font-display text-[26px] leading-tight text-linho/85 sm:text-3xl">
             {proprio ? 'Seu catálogo em 3D, na casa de cada cliente.' : 'Seu catálogo em 3D, na casa do seu cliente.'}
           </p>
           <div className="mt-8 flex gap-3">
@@ -80,7 +80,7 @@ export function Footer() {
           </ul>
         </div>
 
-        <div>
+        <div className="col-span-2 md:col-span-1">
           <p className="eyebrow mb-5 text-linho/45">Fale com a {empresa.nome}</p>
           <p className="text-sm leading-7 font-medium">
             {empresa.atendimento}

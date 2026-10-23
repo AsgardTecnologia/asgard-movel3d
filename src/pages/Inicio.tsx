@@ -47,7 +47,7 @@ function Titulo({ eyebrow, children, claro }: { eyebrow: string; children: React
         <span className={`h-px w-8 ${claro ? 'bg-linho/40' : 'bg-terracota'}`} />
         {eyebrow}
       </p>
-      <h2 className="mt-5 text-[44px] leading-[1] md:text-[64px]">{children}</h2>
+      <h2 className="mt-5 text-[38px] leading-[1.02] sm:text-[48px] md:text-[64px]">{children}</h2>
     </div>
   )
 }
@@ -60,41 +60,41 @@ function Hero() {
   // Nomes longos ganham uma linha menor para não estourar o título.
   const tamanhoNome =
     marca.nome.length > 18
-      ? 'text-[40px] sm:text-[52px] lg:text-[60px] xl:text-[68px]'
-      : 'text-[56px] sm:text-[76px] lg:text-[88px] xl:text-[100px]'
+      ? 'text-[34px] sm:text-[52px] lg:text-[60px] xl:text-[68px]'
+      : 'text-[46px] sm:text-[76px] lg:text-[88px] xl:text-[100px]'
 
   return (
     <section className="px-3 pt-2 md:px-5">
-      <div className="relative mx-auto flex min-h-[640px] max-w-[1560px] overflow-hidden rounded-[28px] bg-estudio md:min-h-[min(calc(100svh-120px),840px)]">
-        <div className="relative flex w-full flex-col justify-between gap-10 p-7 md:p-12 xl:p-14">
+      <div className="relative mx-auto flex max-w-[1560px] overflow-hidden rounded-[28px] bg-estudio md:min-h-[min(calc(100svh-120px),840px)]">
+        <div className="relative flex w-full flex-col justify-between gap-8 p-5 sm:gap-10 sm:p-7 md:p-12 xl:p-14">
           <CenaRA
             movel={destaque}
             cor={cor}
             medida="180 cm"
-            className="order-1 -mx-7 h-[340px] sm:h-[420px] md:absolute md:inset-y-0 md:right-0 md:order-none md:mx-0 md:h-auto md:w-[62%]"
+            className="order-1 -mx-5 h-[300px] sm:-mx-7 sm:h-[420px] md:absolute md:inset-y-0 md:right-0 md:order-none md:mx-0 md:h-auto md:w-[62%]"
           />
           <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-estudio via-estudio/70 via-35% to-estudio/0 to-55% md:block" />
 
           <div className="relative max-w-2xl animar-surgir">
            
             {proprio ? (
-              <h1 className="mt-8 text-[56px] leading-[0.95] sm:text-[76px] lg:text-[88px] xl:text-[100px]">
+              <h1 className="mt-2 text-[46px] leading-[0.95] sm:mt-8 sm:text-[76px] lg:text-[88px] xl:text-[100px]">
                 <span className={`block break-words ${tamanhoNome}`}>{marca.nome}</span>
                 na casa do <em className="text-terracota">cliente.</em>
               </h1>
             ) : (
-              <h1 className="mt-8 text-[56px] leading-[0.95] sm:text-[76px] lg:text-[88px] xl:text-[100px]">
+              <h1 className="mt-2 text-[46px] leading-[0.95] sm:mt-8 sm:text-[76px] lg:text-[88px] xl:text-[100px]">
                 Seu catálogo
                 <br />
                 na casa do <em className="text-terracota">cliente.</em>
               </h1>
             )}
-            <p className="mt-7 max-w-md text-[17px] leading-relaxed font-medium text-tinta/70">
+            <p className="mt-5 max-w-md text-base leading-relaxed font-medium text-tinta/70 sm:mt-7 sm:text-[17px]">
               {proprio
                 ? `Imagine o catálogo da loja ${marca.nome} em 3D e realidade aumentada: seu cliente aponta o celular, vê a peça em tamanho real na sala dele, monta o cômodo inteiro com os seus móveis e compra tudo com certeza.`
                 : 'Transformamos os móveis da sua loja em 3D e realidade aumentada. Seu cliente aponta o celular, vê a peça em tamanho real na sala dele, monta o cômodo inteiro com os seus móveis e compra tudo com certeza.'}
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-7 grid gap-3 sm:mt-9 sm:flex sm:flex-wrap">
               <a href={hrefSecao('catalogo')} className="botao group bg-musgo text-linho hover:bg-musgo-escuro">
                 Testar a demonstração <Seta className="size-4 transition group-hover:translate-x-0.5" />
               </a>
@@ -105,9 +105,9 @@ function Hero() {
             <button
               type="button"
               onClick={() => abrirPainel()}
-              className="mt-6 inline-flex cursor-pointer items-center gap-2.5 rounded-full bg-linho/70 py-2 pr-4 pl-2 text-sm font-semibold backdrop-blur transition hover:bg-linho"
+              className="mt-5 inline-flex cursor-pointer items-center gap-2.5 rounded-full bg-linho/70 py-2 pr-4 pl-2 text-left text-sm font-semibold backdrop-blur transition hover:bg-linho"
             >
-              <span className="grid size-8 place-items-center rounded-full bg-terracota text-linho">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-terracota text-linho">
                 <Paleta className="size-4" />
               </span>
               {personalizada(marca) ? 'Editar o nome e as cores' : 'Veja este site com o nome e as cores da sua loja'}
@@ -170,10 +170,10 @@ function Beneficios() {
 
   return (
     <section className={`${container} py-10 md:py-14`}>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4 lg:divide-x lg:divide-tinta/10">
+      <div className="grid grid-cols-2 gap-3 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-4 lg:divide-x lg:divide-tinta/10">
         {itens.map((i) => (
-          <div key={i.titulo} className="flex items-start gap-4 lg:px-8 lg:first:pl-0">
-            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-creme text-musgo">{i.icone}</span>
+          <div key={i.titulo} className="flex flex-col items-start gap-3 rounded-[20px] bg-creme/70 p-4 sm:flex-row sm:gap-4 sm:rounded-none sm:bg-transparent sm:p-0 lg:px-8 lg:first:pl-0">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-linho text-musgo sm:size-12 sm:bg-creme">{i.icone}</span>
             <div>
               <p className="font-bold">{i.titulo}</p>
               <p className="mt-0.5 text-sm text-pedra">{i.texto}</p>
@@ -195,19 +195,19 @@ function Personalizar() {
 
   return (
     <section id="personalizar" className="scroll-mt-20 px-3 py-6 md:px-5 md:py-10">
-      <div className="mx-auto grid max-w-[1560px] items-center gap-12 overflow-hidden rounded-[28px] bg-musgo px-6 py-14 text-linho md:px-14 md:py-20 lg:grid-cols-[1fr_minmax(0,480px)] lg:gap-20">
+      <div className="mx-auto grid max-w-[1560px] grid-cols-[minmax(0,1fr)] items-center gap-10 overflow-hidden rounded-[28px] bg-musgo px-5 py-12 sm:gap-12 sm:px-6 sm:py-14 text-linho md:px-14 md:py-20 lg:grid-cols-[1fr_minmax(0,480px)] lg:gap-20">
         <div>
           <Titulo eyebrow="Personalize" claro>
             Veja o site com
             <br />a cara da <em className="text-destaque-claro">sua loja.</em>
           </Titulo>
-          <p className="mt-6 max-w-md text-[17px] leading-relaxed text-linho/75">
+          <p className="mt-6 max-w-md text-base leading-relaxed text-linho/75 sm:text-[17px]">
             Coloque o nome e as 4 cores da sua marca. O site inteiro muda na hora, para você imaginar o seu catálogo em
             3D funcionando de verdade.
           </p>
-          <ul className="mt-9 space-y-3">
+          <ul className="mt-8 space-y-3 sm:mt-9">
             {itens.map((i) => (
-              <li key={i} className="flex items-center gap-3 font-semibold text-linho/90">
+              <li key={i} className="flex items-center gap-3 text-sm font-semibold text-linho/90 sm:text-[15px]">
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-linho/10">
                   <span className="size-1.5 rounded-full bg-destaque-claro" />
                 </span>
@@ -217,7 +217,7 @@ function Personalizar() {
           </ul>
         </div>
 
-        <div className="rounded-[24px] bg-creme p-6 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.45)] md:p-8">
+        <div className="rounded-[24px] bg-creme p-4 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.45)] sm:p-6 md:p-8">
           <FormMarca aoVer={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
         </div>
       </div>
@@ -294,7 +294,7 @@ function Categorias({ onEscolher }: { onEscolher: (c: Categoria) => void }) {
         </p>
       </div>
 
-      <div className="mt-10 flex justify-end gap-2">
+      <div className="mt-10 hidden justify-end gap-2 md:flex">
         {([-1, 1] as const).map((sentido) => (
           <button
             key={sentido}
@@ -311,7 +311,7 @@ function Categorias({ onEscolher }: { onEscolher: (c: Categoria) => void }) {
       <div
         ref={ref}
         {...eventos}
-        className={`-mx-5 mt-5 flex gap-4 overflow-x-auto scroll-px-5 px-5 pb-2 [scrollbar-width:none] md:-mx-8 md:scroll-px-8 md:px-8 [&::-webkit-scrollbar]:hidden ${
+        className={`-mx-5 mt-8 flex gap-3 sm:gap-4 md:mt-5 overflow-x-auto scroll-px-5 px-5 pb-2 [scrollbar-width:none] md:-mx-8 md:scroll-px-8 md:px-8 [&::-webkit-scrollbar]:hidden ${
           arrastando ? 'cursor-grabbing select-none' : 'cursor-grab snap-x snap-mandatory'
         }`}
       >
@@ -359,7 +359,7 @@ function Catalogo({ filtro, setFiltro }: { filtro: Filtro; setFiltro: (f: Filtro
   const proprio = temNomeProprio(marca)
 
   return (
-    <section id="catalogo" className="scroll-mt-20 bg-creme py-20 md:py-28">
+    <section id="catalogo" className="scroll-mt-20 bg-creme py-14 md:py-28">
       <div className={container}>
         <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <Titulo eyebrow={proprio ? `Catálogo ${marca.nome}` : 'Demonstração ao vivo'}>
@@ -387,7 +387,7 @@ function Catalogo({ filtro, setFiltro }: { filtro: Filtro; setFiltro: (f: Filtro
           vai ter.
         </p>
 
-        <div className="mt-12 grid grid-flow-row-dense grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-flow-row-dense grid-cols-1 gap-x-6 gap-y-10 sm:mt-12 sm:gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {lista.map((m) => {
             const largo = m.formato === 'largo'
             return (
@@ -422,7 +422,7 @@ function MonteAmbiente() {
   ]
 
   return (
-    <section id="monte-seu-ambiente" className={`${container} scroll-mt-20 py-20 md:py-28`}>
+    <section id="monte-seu-ambiente" className={`${container} scroll-mt-20 py-14 md:py-28`}>
       <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
         <Titulo eyebrow="Ambiente 3D">
           Ele monta a sala.
@@ -445,7 +445,7 @@ function MonteAmbiente() {
         </div>
       </div>
 
-      <div className="mt-12">
+      <div className="mt-10 md:mt-12">
         <MockupAmbiente />
       </div>
 
@@ -488,8 +488,8 @@ function Ambientes() {
   ]
 
   return (
-    <section id="ambientes" className={`${container} scroll-mt-20 space-y-4 py-20 md:py-28`}>
-      <div className="mb-12">
+    <section id="ambientes" className={`${container} scroll-mt-20 space-y-4 py-14 md:py-28`}>
+      <div className="mb-10 md:mb-12">
         <Titulo eyebrow="Para quem é">Onde o 3D vende por você.</Titulo>
       </div>
       {blocos.map((b, i) => {
@@ -497,12 +497,12 @@ function Ambientes() {
         return (
           <div key={b.titulo} className="grid overflow-hidden rounded-[28px] md:grid-cols-[1.35fr_1fr]">
             <div className={`relative md:min-h-[520px] ${i % 2 ? 'md:order-2' : ''}`}>{b.visual}</div>
-            <div className={`flex flex-col justify-between gap-10 p-8 md:p-12 ${b.painel}`}>
+            <div className={`flex flex-col justify-between gap-6 p-6 sm:gap-10 sm:p-8 md:p-12 ${b.painel}`}>
               <p className={`eyebrow ${claro ? 'text-linho/60' : 'text-terracota'}`}>
                 0{i + 1} · {b.eyebrow}
               </p>
               <div>
-                <h3 className="text-[40px] leading-[1.02] md:text-[52px]">{b.titulo}</h3>
+                <h3 className="text-[34px] leading-[1.02] sm:text-[40px] md:text-[52px]">{b.titulo}</h3>
                 <p className={`mt-5 max-w-sm leading-relaxed ${claro ? 'text-linho/75' : 'text-pedra'}`}>{b.texto}</p>
                 <a
                   href={hrefMovel(b.movel)}
@@ -529,17 +529,17 @@ function Sobre() {
 
   return (
     <section id="sobre" className="scroll-mt-20 bg-musgo text-linho">
-      <div className={`${container} py-20 md:py-28`}>
+      <div className={`${container} py-14 md:py-28`}>
         <p className="eyebrow text-center text-linho/55">Por que a {empresa.nome}</p>
-        <h2 className="mx-auto mt-6 max-w-4xl text-center text-[40px] leading-[1.05] md:text-[68px]">
+        <h2 className="mx-auto mt-6 max-w-4xl text-center text-[36px] leading-[1.05] sm:text-[48px] md:text-[68px]">
           Menos dúvida no carrinho, <em className="text-destaque-claro">mais móvel vendido.</em>
         </h2>
-        <div className="mt-16 grid gap-px overflow-hidden rounded-[20px] bg-linho/10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-[20px] bg-linho/10 md:mt-16 lg:grid-cols-4">
           {pilares.map((p) => (
-            <div key={p.n} className="bg-musgo p-8 md:p-10">
-              <p className="font-display text-5xl text-linho/25">{p.n}</p>
-              <p className="mt-8 text-xl font-bold">{p.titulo}</p>
-              <p className="mt-2 leading-relaxed text-linho/65">{p.texto}</p>
+            <div key={p.n} className="bg-musgo p-5 sm:p-8 md:p-10">
+              <p className="font-display text-4xl text-linho/25 sm:text-5xl">{p.n}</p>
+              <p className="mt-5 text-base font-bold sm:mt-8 sm:text-xl">{p.titulo}</p>
+              <p className="mt-2 text-sm leading-relaxed text-linho/65 sm:text-[15px]">{p.texto}</p>
             </div>
           ))}
         </div>
@@ -553,15 +553,15 @@ function Experiencia() {
   const viewer = useRef<ModelViewerElement>(null)
 
   return (
-    <section className={`${container} py-20 md:py-28`}>
+    <section className={`${container} py-14 md:py-28`}>
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[28px]">
+        <div className="relative aspect-square overflow-hidden rounded-[28px] sm:aspect-[4/3]">
           <Visualizador3D movel={peca} cor={0} refViewer={viewer} />
           <div className="pointer-events-none absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-linho px-4 py-2 text-xs font-bold shadow-lg">
             <span className="size-2 animate-pulse rounded-full bg-terracota" /> Modelo real · toque nas gavetas
           </div>
-          <div className="absolute right-5 bottom-5 left-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-linho/90 p-3 shadow-xl backdrop-blur-md sm:left-auto">
-            <span className="flex items-center gap-2 rounded-xl bg-creme px-3 py-2 text-xs font-bold">
+          <div className="absolute right-4 bottom-4 flex items-center gap-3 rounded-2xl bg-linho/90 p-2 shadow-xl backdrop-blur-md sm:right-5 sm:bottom-5 sm:p-3">
+            <span className="hidden items-center gap-2 rounded-xl bg-creme px-3 py-2 text-xs font-bold sm:flex">
               <Cubo className="size-4" /> Arraste: 360°
             </span>
             <a
@@ -618,7 +618,7 @@ function RealidadeAumentada() {
 
   return (
     <section id="realidade-aumentada" className="scroll-mt-20 px-3 py-3 md:px-5 md:py-5">
-      <div className="relative mx-auto grid max-w-[1560px] items-center gap-14 overflow-hidden rounded-[28px] bg-creme px-6 py-16 md:px-14 md:py-20 lg:grid-cols-[1.1fr_1fr]">
+      <div className="relative mx-auto grid max-w-[1560px] items-center gap-10 overflow-hidden rounded-[28px] bg-creme px-5 py-12 sm:gap-14 sm:px-6 sm:py-16 md:px-14 md:py-20 lg:grid-cols-[1.1fr_1fr]">
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <p className="eyebrow flex items-center gap-3 text-terracota">
@@ -629,7 +629,7 @@ function RealidadeAumentada() {
               <span className="size-1.5 animate-pulse rounded-full bg-destaque-claro" /> Em 3 passos
             </span>
           </div>
-          <h2 className="mt-5 text-[44px] leading-[1] md:text-[68px]">
+          <h2 className="mt-5 text-[38px] leading-[1.02] sm:text-[48px] md:text-[68px]">
             Seu cliente testa
             <br />
             antes de <em className="text-terracota">comprar.</em>
@@ -730,7 +730,7 @@ function RealidadeAumentada() {
                   <p className="text-xs font-bold">Cor</p>
                   <p className="text-xs font-semibold text-pedra">{peca.cores[cor].nome}</p>
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 [&_button]:size-9 [&>div]:gap-2">
                   <SeletorCores cores={peca.cores} selecionada={cor} onSelecionar={setCor} tamanho="g" />
                 </div>
                 <div className="mt-4 flex items-center justify-between">

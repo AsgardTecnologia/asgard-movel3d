@@ -264,8 +264,8 @@ function BotaoQuadrado({ rotulo, onClick, children }: { rotulo: string; onClick:
 
 function Numero({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   return (
-    <div className="px-4 py-4">
-      <dd className="font-display text-[26px] leading-none text-terracota">{children}</dd>
+    <div className="px-3 py-4 sm:px-4">
+      <dd className="font-display text-[21px] leading-none text-terracota sm:text-[26px]">{children}</dd>
       <dt className="mt-2 text-[11px] font-bold tracking-wide text-pedra uppercase">{rotulo}</dt>
     </div>
   )

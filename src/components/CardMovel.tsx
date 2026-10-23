@@ -9,7 +9,7 @@ import { SeletorCores } from './SeletorCores'
 export function CardMovel({
   movel,
   largo = false,
-  aspecto = 'aspect-[4/5]',
+  aspecto = 'aspect-[5/4] sm:aspect-[4/5]',
 }: {
   movel: Movel
   largo?: boolean
@@ -47,7 +47,7 @@ export function CardMovel({
 
       <div className="mt-4 flex items-start justify-between gap-4 px-1">
         <a href={hrefMovel(movel.slug)} className="min-w-0">
-          <h3 className="text-[26px] leading-tight">{movel.nome}</h3>
+          <h3 className="text-[24px] leading-tight sm:text-[26px]">{movel.nome}</h3>
           <p className="mt-1 truncate text-sm text-pedra">{movel.resumo}</p>
         </a>
         <div className="flex shrink-0 flex-col items-end gap-2 pt-1.5">

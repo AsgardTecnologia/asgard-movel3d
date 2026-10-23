@@ -169,7 +169,7 @@ function CampoCor({ rotulo, uso, valor, aoMudar }: { rotulo: string; uso: string
           setTexto(v)
           if (/^#[0-9a-f]{6}$/i.test(v)) aoMudar(v.toLowerCase())
         }}
-        className="w-[88px] rounded-full bg-creme px-3 py-2 text-center font-mono text-xs font-semibold uppercase outline-none focus:ring-2 focus:ring-musgo/30"
+        className="w-[78px] shrink-0 rounded-full bg-creme px-2.5 py-2 sm:w-[88px] sm:px-3 text-center font-mono text-xs font-semibold uppercase outline-none focus:ring-2 focus:ring-musgo/30"
       />
     </div>
   )
@@ -232,7 +232,7 @@ export function BotaoPersonalizar() {
     <button
       type="button"
       onClick={() => abrirPainel()}
-      className="fixed bottom-5 left-5 z-40 inline-flex cursor-pointer items-center gap-3 rounded-full bg-tinta py-2.5 pr-5 pl-2.5 text-sm font-bold text-linho shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition hover:-translate-y-0.5"
+      className="fixed bottom-4 left-4 z-40 inline-flex cursor-pointer items-center gap-2.5 rounded-full bg-tinta py-2 pr-4 pl-2 text-xs sm:bottom-5 sm:left-5 sm:gap-3 sm:py-2.5 sm:pr-5 sm:pl-2.5 sm:text-sm font-bold text-linho shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition hover:-translate-y-0.5"
     >
       <Cores marca={marca} />
       {personalizada(marca) ? 'Editar marca' : 'Personalizar'}

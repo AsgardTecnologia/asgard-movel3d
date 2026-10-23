@@ -57,18 +57,18 @@ export function DetalheMovel({ movel }: { movel: Movel }) {
 
   return (
     <>
-      <section className={`${container} pt-6 pb-20 md:pt-8`}>
-        <nav className="flex items-center gap-2 text-sm font-medium text-pedra">
+      <section className={`${container} pt-5 pb-14 md:pt-8 md:pb-20`}>
+        <nav className="flex min-w-0 items-center gap-2 text-sm font-medium text-pedra">
           <a
             href={hrefSecao('catalogo')}
-            className="inline-flex items-center gap-2 rounded-full border border-tinta/10 px-4 py-2 transition hover:border-tinta/40 hover:text-tinta"
+            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-tinta/10 px-4 py-2 transition hover:border-tinta/40 hover:text-tinta"
           >
             <Voltar className="size-4" /> {proprio ? `Catálogo ${marca.nome}` : 'Demonstração'}
           </a>
+          <span className="hidden px-1 text-tinta/25 sm:inline">/</span>
+          <span className="hidden sm:inline">{movel.categoria}</span>
           <span className="px-1 text-tinta/25">/</span>
-          <span>{movel.categoria}</span>
-          <span className="px-1 text-tinta/25">/</span>
-          <span className="font-semibold text-tinta">{movel.nome}</span>
+          <span className="truncate font-semibold text-tinta">{movel.nome}</span>
         </nav>
 
         <div className="mt-5 flex flex-col items-start justify-between gap-3 rounded-[20px] bg-musgo px-5 py-4 text-linho sm:flex-row sm:items-center">
@@ -86,7 +86,7 @@ export function DetalheMovel({ movel }: { movel: Movel }) {
           </a>
         </div>
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-14">
+        <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-8 sm:mt-8 sm:gap-10 lg:grid-cols-[1.3fr_1fr] lg:gap-14">
           {/* Na tela cheia a coluna sai do sticky/animação, que prenderiam o "fixed" e o z-index dentro dela. */}
           <div className={telaCheia ? 'relative z-50' : 'animar-surgir lg:sticky lg:top-24 lg:self-start'}>
             {movel.modelo ? (
@@ -98,18 +98,52 @@ export function DetalheMovel({ movel }: { movel: Movel }) {
                 }
               >
                 <Visualizador3D movel={movel} cor={cor} complemento={complemento} refViewer={viewer}>
-                  <div className="so-ra absolute inset-x-4 bottom-8 justify-center">
-                    <div className="flex flex-wrap justify-center gap-x-5 gap-y-3 rounded-full bg-linho/90 px-4 py-3 shadow-xl backdrop-blur-md">
-                      <SeletorCores cores={movel.cores} selecionada={cor} onSelecionar={setCor} tamanho="g" />
-                      {movel.complemento && (
-                        <SeletorCores
-                          cores={movel.complemento.opcoes}
-                          selecionada={complemento}
-                          onSelecionar={setComplemento}
-                          tamanho="g"
-                        />
-                      )}
+                  {/* Interface da sessão de RA: o model-viewer usa este botão para sair. */}
+                  <button
+                    type="button"
+                    slot="exit-webxr-ar-button"
+                    aria-label="Sair da realidade aumentada"
+                    className="absolute top-[max(1rem,env(safe-area-inset-top))] left-4 grid size-14 cursor-pointer place-items-center rounded-2xl bg-linho/90 text-tinta shadow-xl backdrop-blur-md"
+                  >
+                    <Fechar className="size-6" />
+                  </button>
+
+                  <div className="so-ra absolute top-[max(1rem,env(safe-area-inset-top))] right-4 left-[5.25rem] h-14 items-center justify-between gap-3 rounded-2xl bg-linho/90 px-4 shadow-xl backdrop-blur-md">
+                    <div className="min-w-0">
+                      <p className="truncate text-[10px] font-bold tracking-wide text-terracota uppercase">
+                        {proprio ? `${marca.nome} · RA` : 'Ao vivo · RA'}
+                      </p>
+                      <p className="truncate font-display text-lg leading-tight">{movel.nome}</p>
                     </div>
+                    <span className="shrink-0 rounded-full bg-musgo px-2.5 py-1 text-[10px] font-bold text-linho">1:1</span>
+                  </div>
+
+                  <div className="so-ra absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] flex-col gap-4 rounded-[26px] bg-linho/90 p-4 shadow-xl backdrop-blur-md">
+                    <div>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-bold">Cor</p>
+                        <p className="truncate text-xs font-semibold text-pedra">{corAtual.nome}</p>
+                      </div>
+                      <div className="mt-3">
+                        <SeletorCores cores={movel.cores} selecionada={cor} onSelecionar={setCor} tamanho="g" />
+                      </div>
+                    </div>
+                    {movel.complemento && complementoAtual && (
+                      <div className="border-t border-tinta/10 pt-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-xs font-bold">{movel.complemento.rotulo}</p>
+                          <p className="truncate text-xs font-semibold text-pedra">{complementoAtual.nome}</p>
+                        </div>
+                        <div className="mt-3">
+                          <SeletorCores
+                            cores={movel.complemento.opcoes}
+                            selecionada={complemento}
+                            onSelecionar={setComplemento}
+                            tamanho="g"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </Visualizador3D>
 
@@ -219,10 +253,10 @@ export function DetalheMovel({ movel }: { movel: Movel }) {
               {proprio && `${marca.nome} · `}
               {movel.categoria} · {movel.linha}
             </span>
-            <h1 className="mt-6 text-[56px] leading-[0.95] md:text-[76px]">{movel.nome}</h1>
-            <p className="mt-5 text-lg leading-relaxed font-medium text-pedra">{movel.resumo}</p>
+            <h1 className="mt-5 text-[44px] leading-[0.95] sm:mt-6 sm:text-[56px] md:text-[76px]">{movel.nome}</h1>
+            <p className="mt-4 text-base leading-relaxed font-medium text-pedra sm:mt-5 sm:text-lg">{movel.resumo}</p>
 
-            <div className="mt-8 rounded-[20px] bg-creme p-6">
+            <div className="mt-7 rounded-[20px] bg-creme p-5 sm:mt-8 sm:p-6">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-bold">Cor</p>
                 <p className="text-sm font-semibold text-pedra">
@@ -308,15 +342,15 @@ export function DetalheMovel({ movel }: { movel: Movel }) {
 
       {qrAberto && <ModalQR nome={movel.nome} cor={nomeEscolha} aoFechar={() => setQrAberto(false)} />}
 
-      <section className="bg-creme py-20 md:py-24">
+      <section className="bg-creme py-14 md:py-24">
         <div className={container}>
-          <div className="flex items-end justify-between gap-6">
-            <h2 className="text-[40px] leading-none md:text-[56px]">Teste outras peças</h2>
+          <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end sm:gap-6">
+            <h2 className="text-[36px] leading-none sm:text-[40px] md:text-[56px]">Teste outras peças</h2>
             <a href={hrefSecao('catalogo')} className="botao group shrink-0 border border-tinta/20 hover:bg-linho">
               Ver demonstração <Seta className="size-4 transition group-hover:translate-x-0.5" />
             </a>
           </div>
-          <div className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:mt-12 sm:grid-cols-2 sm:gap-y-12 lg:grid-cols-3">
             {relacionados.map((m) => (
               <CardMovel key={m.slug} movel={m} aspecto="aspect-[5/4]" />
             ))}

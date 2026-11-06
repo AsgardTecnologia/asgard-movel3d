@@ -149,6 +149,32 @@ export function desenharPiso(tipo: TipoPiso, cor: string, lado = LADO) {
           }
           g.stroke()
         }
+        // Tábua mais clara numa ponta que na outra, como a madeira natural.
+        const grad = g.createLinearGradient(x, 0, x + comp, 0)
+        grad.addColorStop(0, tom(cor, (r() - 0.5) * 0.12, 0.35))
+        grad.addColorStop(1, tom(cor, (r() - 0.5) * 0.12, 0.35))
+        g.fillStyle = grad
+        g.fillRect(x, y, comp, largura)
+        // Nó ocasional, com os veios contornando.
+        if (r() < 0.35) {
+          const nx = x + comp * (0.2 + r() * 0.6)
+          const ny = y + largura * (0.3 + r() * 0.4)
+          const rx = 6 + r() * 10
+          for (let k = 4; k >= 0; k--) {
+            g.strokeStyle = tom(cor, -0.18 - k * 0.04, 0.5)
+            g.lineWidth = 1.2
+            g.beginPath()
+            g.ellipse(nx, ny, rx + k * 6, (rx + k * 6) * 0.4, 0, 0, Math.PI * 2)
+            g.stroke()
+          }
+          g.fillStyle = tom(cor, -0.45, 0.8)
+          g.beginPath()
+          g.ellipse(nx, ny, rx * 0.6, rx * 0.3, 0, 0, Math.PI * 2)
+          g.fill()
+        }
+        // Chanfro: brilho na borda de cima, fresta escura na emenda.
+        g.fillStyle = tom(cor, 0.18, 0.5)
+        g.fillRect(x, y + 1.5, comp, 1.5)
         g.fillStyle = tom(cor, -0.5, 0.85)
         g.fillRect(x + comp - 1.5, y, 3, largura)
         // Tábua que passa da borda continua do outro lado.
@@ -163,6 +189,7 @@ export function desenharPiso(tipo: TipoPiso, cor: string, lado = LADO) {
     }
   } else if (tipo === 'porcelanato') {
     manchas(40, lado / 6, 0.08)
+    manchas(400, lado / 60, 0.1)
     const passo = 0.6 * px
     for (let x = 0; x < lado; x += passo)
       for (let y = 0; y < lado; y += passo) {
@@ -201,6 +228,18 @@ export function desenharPiso(tipo: TipoPiso, cor: string, lado = LADO) {
     const img = g.getImageData(0, 0, lado, lado)
     for (let i = 0; i < img.data.length; i += 4) {
       const v = (r() - 0.5) * 34
+      img.data[i] += v
+      img.data[i + 1] += v
+      img.data[i + 2] += v
+    }
+    g.putImageData(img, 0, 0)
+  }
+  // Granulado fino em tudo (menos mármore e carpete, que já têm o seu): tira o aspecto de cor chapada.
+  if (tipo !== 'marmore' && tipo !== 'carpete') {
+    const img = g.getImageData(0, 0, lado, lado)
+    const forca = tipo === 'cimento' ? 22 : 9
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = (r() - 0.5) * forca
       img.data[i] += v
       img.data[i + 1] += v
       img.data[i + 2] += v

@@ -739,6 +739,8 @@ const construtores: Record<string, Construtor> = {
     const cupula = malha(g, new THREE.SphereGeometry(r, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat('metal'), 0, 0, 0)
     cupula.material = (mat('metal') as THREE.MeshStandardMaterial).clone()
     ;(cupula.material as THREE.MeshStandardMaterial).side = THREE.DoubleSide
+    // Luminária acesa não faz mancha escura embaixo dela.
+    cupula.castShadow = false
     esfera(g, 0.045, fixos.luz, 0, 0.04, 0).castShadow = false
     cilindro(g, 0.003, 0.003, a - r, fixos.preto, 0, r, 0, 6).castShadow = false
     const dentroCupula = new THREE.Mesh(
@@ -798,6 +800,170 @@ const construtores: Record<string, Construtor> = {
     construtores.arbusto(g2, { l: m.l - 0.1, p: m.p - 0.08, a: m.a - h }, mat, r)
     g2.position.y = h - 0.05
     g.add(g2)
+  },
+
+  livros(g, { l, p, a }, mat, r) {
+    const base = mat('capa')
+    const tons = [0, -0.35, 0.45, -0.15, 0.25]
+    let y = 0
+    let i = 0
+    while (y < a - 0.015) {
+      const h = Math.min(a - y, 0.022 + r() * 0.02)
+      const w = l * (0.78 + r() * 0.22)
+      const d = p * (0.8 + r() * 0.2)
+      const livro = new THREE.Group()
+      caixa(livro, w, h, d, variante(base, tons[i % tons.length]), 0, 0, 0, 0.002)
+      // Miolo de papel aparecendo na frente.
+      caixa(livro, w - 0.01, h - 0.006, 0.004, padrao('#f1ece0', 0.9), -0.003, 0.003, d / 2 - 0.001, 0)
+      livro.position.y = y
+      livro.rotation.y = (r() - 0.5) * 0.3
+      g.add(livro)
+      y += h
+      i++
+    }
+  },
+
+  'vasos-decor'(g, { l, p, a }, mat) {
+    const m = mat('vaso')
+    const perfil = (pts: number[][]) => pts.map(([x, y]) => new THREE.Vector2(x, y))
+    // Vaso alto e bojudo, garrafa fina e um baixo, em tons diferentes.
+    malha(g, new THREE.LatheGeometry(perfil([[0, 0], [0.05, 0], [0.065, 0.06], [0.07, 0.13], [0.05, 0.2], [0.025, 0.24], [0.028, a * 0.85]]), 32), m, -l / 4, 0, 0)
+    malha(g, new THREE.LatheGeometry(perfil([[0, 0], [0.035, 0], [0.04, 0.08], [0.015, 0.16], [0.013, a]]), 24), variante(m, 0.35), l / 6, 0, -p / 6)
+    malha(g, new THREE.LatheGeometry(perfil([[0, 0], [0.045, 0], [0.06, 0.05], [0.055, 0.1], [0.04, 0.11]]), 28), variante(m, -0.3), l / 3, 0, p / 5)
+    // Galhos secos no vaso alto.
+    for (let k = 0; k < 4; k++) {
+      const galho = cilindro(g, 0.002, 0.003, a * 0.9, fixos.tronco, -l / 4, a * 0.5, 0, 5)
+      galho.rotation.set((k - 1.5) * 0.12, 0, (k % 2 ? 1 : -1) * 0.15)
+    }
+  },
+
+  'bandeja-decor'(g, { l, p }, mat) {
+    const m = mat('metal')
+    caixa(g, l, 0.006, p, m, 0, 0, 0, 0.003)
+    for (const [w, d, x, z] of [
+      [l, 0.006, 0, -p / 2],
+      [l, 0.006, 0, p / 2],
+      [0.006, p, -l / 2, 0],
+      [0.006, p, l / 2, 0],
+    ])
+      caixa(g, w, 0.02, d, m, x, 0, z, 0)
+    // Vela em copo e difusor com varetas.
+    cilindro(g, 0.04, 0.036, 0.09, padrao('#2b2b2d', 0.3), -l / 4, 0.006, 0, 24)
+    cilindro(g, 0.034, 0.034, 0.06, padrao('#efe8da', 0.8), -l / 4, 0.03, 0, 24)
+    esfera(g, 0.006, fixos.luz, -l / 4, 0.1, 0).castShadow = false
+    cilindro(g, 0.025, 0.03, 0.09, fixos.vidro, l / 5, 0.006, 0, 20)
+    for (let k = 0; k < 5; k++) {
+      const v = cilindro(g, 0.0015, 0.0015, 0.2, fixos.tronco, l / 5, 0.07, 0, 4)
+      v.rotation.set(Math.sin(k * 1.3) * 0.2, 0, Math.cos(k * 1.7) * 0.2)
+    }
+  },
+
+  prateleira(g, { l, p, a }, mat, r) {
+    const m = mat('corpo')
+    caixa(g, l, 0.03, p, m, 0, 0, 0, 0.003)
+    // Livros em pé e deitados, e um vasinho com folhagem.
+    const cores = ['#b0603a', '#2d3a2e', '#d8c6a9', '#44566b', '#efece6', '#8a9a7b']
+    let x = -l / 2 + 0.06
+    for (let k = 0; k < 6; k++) {
+      const w = 0.022 + r() * 0.012
+      caixa(g, w, 0.17 + r() * 0.08, p * 0.75, padrao(cores[k], 0.8), x, 0.03, 0, 0.002)
+      x += w + 0.002
+    }
+    for (let k = 0; k < 3; k++) caixa(g, 0.18, 0.025, p * 0.7, padrao(cores[(k + 2) % 6], 0.8), l / 2 - 0.15, 0.03 + k * 0.025, 0, 0.002)
+    if (l > 0.6) {
+      cilindro(g, 0.045, 0.035, 0.1, padrao('#efece6', 0.4), 0, 0.03, 0, 24)
+      folhas(g, padrao('#4f6b3a', 0.7), r, 0.08, 0.12, Math.max(0.2, a))
+    }
+  },
+
+  arandela(g, { l, p, a }, mat) {
+    const m = mat('metal')
+    caixa(g, 0.07, 0.12, 0.012, m, 0, a / 2 - 0.06, -p / 2 + 0.006, 0.003)
+    cilindro(g, 0.006, 0.006, p * 0.6, m, 0, a / 2, -p / 4, 8).rotation.x = Math.PI / 2
+    const cm = padrao('#efe8da', 0.9).clone()
+    cm.side = THREE.DoubleSide
+    cm.emissive = new THREE.Color('#ffcf8a')
+    cm.emissiveIntensity = 0.35
+    malha(g, new THREE.CylinderGeometry(l / 2 - 0.02, l / 2, a * 0.55, 28, 1, true), cm, 0, a / 2, p / 4)
+    esfera(g, 0.025, fixos.luz, 0, a / 2, p / 4).castShadow = false
+  },
+
+  almofadas(g, { l }, mat) {
+    const t = mat('tecido')
+    const n = Math.max(1, Math.round(l / 0.45))
+    for (let i = 0; i < n; i++) {
+      const x = -l / 2 + (l / n) * (i + 0.5)
+      const al = almofada(g, 0.4, variante(t, i % 2 ? -0.2 : 0.15), x, 0.2, 0)
+      al.rotation.set(-0.15, (i - (n - 1) / 2) * 0.12, (i % 2 ? 1 : -1) * 0.06)
+    }
+  },
+
+  fruteira(g, { l, a }, mat, r) {
+    const perfil = [[0, 0], [l * 0.2, 0], [l * 0.4, a * 0.4], [l * 0.5, a * 0.75]].map(([x, y]) => new THREE.Vector2(x, y))
+    const tm = (mat('tigela') as THREE.MeshStandardMaterial).clone()
+    tm.side = THREE.DoubleSide
+    malha(g, new THREE.LatheGeometry(perfil, 40), tm)
+    const frutas = ['#c8382b', '#e0a32e', '#7fa33a', '#d9552a', '#c8382b', '#e8cf4a']
+    for (let k = 0; k < 7; k++) {
+      const ang = k * 2.4
+      const d = k === 0 ? 0 : l * 0.22
+      esfera(g, 0.035 + r() * 0.01, padrao(frutas[k % frutas.length], 0.45), Math.cos(ang) * d, a * 0.55 + (k === 0 ? 0.05 : 0), Math.sin(ang) * d)
+    }
+  },
+
+  utensilios(g, { l, p, a }, mat) {
+    // Tábua encostada na parede, potes de vidro com tampa de madeira, garrafa de azeite e moedor.
+    const madeira = mat('tabua')
+    caixa(g, l * 0.45, a * 0.95, 0.018, madeira, -l / 4, 0, -p / 2 + 0.03, 0.01).rotation.x = -0.12
+    for (const [x, h] of [
+      [0.02, 0.2],
+      [0.12, 0.15],
+    ]) {
+      cilindro(g, 0.045, 0.045, h, fixos.vidro, x, 0, 0.02, 24)
+      cilindro(g, 0.04, 0.04, h * 0.7, padrao(h > 0.18 ? '#e8dcc0' : '#8a5a33', 0.9), x, 0.005, 0.02, 20)
+      cilindro(g, 0.047, 0.047, 0.025, madeira, x, h, 0.02, 24)
+    }
+    cilindro(g, 0.028, 0.03, 0.2, padrao('#5c6b2a', 0.15, 0.1), l / 2 - 0.06, 0, -0.02, 20)
+    cilindro(g, 0.012, 0.012, 0.06, padrao('#5c6b2a', 0.15, 0.1), l / 2 - 0.06, 0.2, -0.02, 12)
+    cilindro(g, 0.02, 0.022, 0.16, fixos.preto, l / 2 - 0.12, 0, 0.06, 16)
+  },
+
+  toalheiro(g, { l, p, a }, mat) {
+    const m = mat('metal')
+    for (const x of [-1, 1]) {
+      caixa(g, 0.02, 0.05, 0.02, m, x * (l / 2 - 0.01), a - 0.05, -p / 2 + 0.01, 0.004)
+      cilindro(g, 0.008, 0.008, p * 0.6, m, x * (l / 2 - 0.01), a - 0.025, -p / 4, 10).rotation.x = Math.PI / 2
+    }
+    cilindro(g, 0.009, 0.009, l, m, 0, a - 0.025, p / 4 - 0.01, 12).rotation.z = Math.PI / 2
+    // Toalha dobrada ao meio sobre a barra.
+    const t = mat('tecido')
+    const toalha = l * 0.75
+    caixa(g, toalha, a - 0.04, 0.012, t, 0, 0, p / 4 - 0.022, 0.006)
+    caixa(g, toalha, a * 0.75, 0.012, variante(t, -0.08), 0, a * 0.25 - 0.03, p / 4 + 0.004, 0.006)
+    caixa(g, toalha * 0.98, 0.025, 0.04, t, 0, a - 0.035, p / 4 - 0.01, 0.012)
+  },
+
+  'kit-banho'(g, { l, p }, mat) {
+    const m = mat('louca')
+    caixa(g, l, 0.012, p, m, 0, 0, 0, 0.005)
+    cilindro(g, 0.03, 0.032, 0.14, m, -l / 4, 0.012, 0, 24)
+    cilindro(g, 0.006, 0.006, 0.03, fixos.cromado, -l / 4, 0.152, 0, 10)
+    caixa(g, 0.02, 0.008, 0.008, fixos.cromado, -l / 4 + 0.012, 0.172, 0, 0.002)
+    cilindro(g, 0.028, 0.03, 0.09, variante(m, -0.2), l / 4, 0.012, 0, 24)
+    for (let k = 0; k < 4; k++) cilindro(g, 0.0015, 0.0015, 0.08, fixos.cromado, l / 4 - 0.015 + k * 0.01, 0.1, 0, 4).castShadow = false
+  },
+
+  'banco-peseira'(g, { l, p, a }, mat) {
+    const e = mat('estrutura')
+    for (const [x, z] of [
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+      [1, 1],
+    ])
+      cilindro(g, 0.014, 0.018, a - 0.12, e, x * (l / 2 - 0.05), 0, z * (p / 2 - 0.05), 12)
+    caixa(g, l, 0.03, p, e, 0, a - 0.14, 0, 0.004)
+    caixa(g, l - 0.01, 0.11, p - 0.01, mat('tecido'), 0, a - 0.11, 0, 0.03)
   },
 
   poste(g, { l, a }, mat) {

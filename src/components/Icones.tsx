@@ -182,6 +182,13 @@ export const Mover = ({ className = 'size-4' }: Props) => (
   </svg>
 )
 
+export const Cadeado = ({ className = 'size-4', aberto }: Props & { aberto?: boolean }) => (
+  <svg {...base} className={className}>
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d={aberto ? 'M8 11V7a4 4 0 0 1 7.5-2' : 'M8 11V7a4 4 0 0 1 8 0v4'} />
+  </svg>
+)
+
 export const Mais = ({ className = 'size-4' }: Props) => (
   <svg {...base} className={className}>
     <path d="M12 5v14M5 12h14" />

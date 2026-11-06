@@ -1,0 +1,57 @@
+{
+ "fonte": "Poly Haven (CC0)",
+ "escolhas": {
+  "piso-madeira": "laminate_floor_02",
+  "piso-marmore": "marble_tiles",
+  "piso-ladrilho": "interior_tiles",
+  "piso-cimento": "smooth_concrete_floor",
+  "parede-tijolinho": "red_brick_03",
+  "parede-pedra": "stacked_stone_wall",
+  "parede-azulejo": "long_white_tiles",
+  "parede-marmore": "marble_01",
+  "parede-cimento": "concrete_wall_004",
+  "parede-lisa": "white_plaster_02"
+ },
+ "metros": {
+  "piso-madeira": [
+   1.7,
+   1.7
+  ],
+  "piso-marmore": [
+   2.0,
+   2.0
+  ],
+  "piso-ladrilho": [
+   1.9,
+   1.9
+  ],
+  "piso-cimento": [
+   2.0,
+   2.0
+  ],
+  "parede-tijolinho": [
+   1.0,
+   1.0
+  ],
+  "parede-pedra": [
+   2.0,
+   2.0
+  ],
+  "parede-azulejo": [
+   1.27,
+   1.27
+  ],
+  "parede-marmore": [
+   1.5,
+   1.5
+  ],
+  "parede-cimento": [
+   2.0,
+   2.0
+  ],
+  "parede-lisa": [
+   1.0,
+   1.0
+  ]
+ }
+}

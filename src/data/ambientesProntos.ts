@@ -157,6 +157,8 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('vaso-sanitario', 34, 160, 270),
       peca('tapete', 95, 85, 0, { l: 70, p: 45, cores: { tecido: '#9a9894' } }),
       peca('planta', 270, 222, 0, { l: 35, p: 35, a: 60 }),
+      peca('toalheiro', 5, 60, 270, { cores: { tecido: '#efece6', metal: '#2a2a2c' } }),
+      peca('kit-banho', 128, 18, 0, { elevacao: 85, cores: { louca: '#2b2b2d' } }),
     ],
   },
   {
@@ -189,6 +191,9 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('cortina', 442, 115, 90, { l: 60, a: 260, cores: { tecido: '#d9d1c3' } }),
       peca('cortina', 442, 285, 90, { l: 60, a: 260, cores: { tecido: '#d9d1c3' } }),
       peca('planta', 40, 372, 0, { a: 110 }),
+      peca('banco-peseira', 225, 236, 0, { cores: { estrutura: NOGUEIRA, tecido: '#8a9a7b' } }),
+      peca('livros', 72, 28, 10, { elevacao: 55, cores: { capa: '#d8c6a9' } }),
+      peca('vasos-decor', 372, 28, 0, { elevacao: 55, l: 22, cores: { vaso: '#efece6' } }),
     ],
   },
   {
@@ -224,6 +229,9 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('pendente', 215, 215, 0, { cores: { metal: PRETO } }),
       peca('pendente', 265, 215, 0, { cores: { metal: PRETO } }),
       peca('planta', 40, 320, 0, { a: 90 }),
+      peca('fruteira', 250, 212, 0, { elevacao: 92, cores: { tigela: '#efece6' } }),
+      peca('utensilios', 380, 20, 0, { elevacao: 90, cores: { tabua: FREIJO } }),
+      peca('vasos-decor', 175, 215, 0, { elevacao: 92, cores: { vaso: '#b5643e' } }),
     ],
   },
   {
@@ -272,6 +280,10 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('guarda-sol', 770, 300, 0, { l: 240, p: 240, cores: { tecido: '#efece6' } }),
       peca('planta', 870, 40, 0, { a: 160 }),
       peca('planta', 30, 670, 0, { a: 140, l: 50, p: 50 }),
+      peca('fruteira', 190, 420, 0, { elevacao: 76, cores: { tigela: '#b5643e' } }),
+      peca('bandeja-decor', 220, 565, 0, { elevacao: 38, cores: { metal: '#b5895c' } }),
+      peca('utensilios', 450, 20, 0, { elevacao: 90, cores: { tabua: FREIJO } }),
+      peca('almofadas', 220, 662, 180, { l: 150, cores: { tecido: '#b5643e' } }),
     ],
   },
   {
@@ -299,6 +311,8 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('armario-aereo', 190, 19, 0, { l: 110, cores: { corpo: '#2f4b57' } }),
       peca('armario-aereo', 100, 19, 0, { l: 60, cores: { corpo: '#2f4b57' } }),
       peca('cesto', 262, 175),
+      peca('kit-banho', 200, 22, 0, { elevacao: 90, cores: { louca: '#f5f5f2' } }),
+      peca('planta', 210, 200, 0, { l: 35, p: 35, a: 70, cores: { vaso: '#b5643e' } }),
     ],
   },
   {
@@ -330,6 +344,9 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('luminaria-piso', 378, 200, 0, { cores: { metal: PRETO } }),
       peca('planta', 40, 318, 0, { a: 110 }),
       peca('quadro', 397, 120, 90, { l: 70, a: 90, cores: { arte: '#44566b', moldura: PRETO } }),
+      peca('livros', 150, 30, -8, { elevacao: 75, cores: { capa: '#44566b' } }),
+      peca('prateleira', 11, 80, 270, { elevacao: 150, cores: { corpo: GRAFITE } }),
+      peca('bandeja-decor', 245, 40, 0, { elevacao: 75, l: 28, cores: { metal: PRETO } }),
     ],
   },
   {
@@ -364,10 +381,15 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('luminaria-piso', 520, 395),
       peca('cortina', 592, 100, 90, { l: 80, a: 270, cores: { tecido: '#efece6' } }),
       peca('cortina', 592, 350, 90, { l: 80, a: 270, cores: { tecido: '#efece6' } }),
+      peca('livros', 278, 248, 15, { elevacao: 38, cores: { capa: '#2b2b2d' } }),
+      peca('bandeja-decor', 325, 252, 0, { elevacao: 38, cores: { metal: '#c9a35a' } }),
+      peca('vasos-decor', 225, 22, 0, { elevacao: 50, cores: { vaso: '#efece6' } }),
+      peca('livros', 380, 25, 0, { elevacao: 50, cores: { capa: '#d8c6a9' } }),
     ],
   },
   {
     id: 'apartamento',
+
     nome: 'Apartamento',
     resumo: 'Studio integrado: cozinha, jantar para quatro e estar.',
     planta: planta(ret(800, 550), 270, {
@@ -406,6 +428,11 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('luminaria-piso', 760, 470),
       peca('cortina', 792, 160, 90, { l: 70, a: 260, cores: { tecido: '#efece6' } }),
       peca('cortina', 792, 390, 90, { l: 70, a: 260, cores: { tecido: '#efece6' } }),
+      peca('fruteira', 200, 300, 0, { elevacao: 76, cores: { tigela: '#efece6' } }),
+      peca('utensilios', 228, 20, 0, { elevacao: 90, cores: { tabua: CARVALHO } }),
+      peca('vasos-decor', 530, 22, 0, { elevacao: 50, cores: { vaso: '#b5643e' } }),
+      peca('livros', 580, 328, 20, { elevacao: 38, cores: { capa: '#44566b' } }),
+      peca('bandeja-decor', 625, 332, 0, { elevacao: 38, cores: { metal: PRETO } }),
     ],
   },
   {
@@ -434,6 +461,8 @@ const prontos: Omit<AmbientePronto, 'foto'>[] = [
       peca('espelho-chao', 396, 150, 90, { cores: { moldura: '#c9a35a' } }),
       peca('pendente', 200, 170, 0, { cores: { metal: '#c9a35a' } }),
       peca('pendente', 260, 170, 0, { cores: { metal: '#c9a35a' } }),
+      peca('vasos-decor', 195, 170, 0, { elevacao: 90, l: 26, cores: { vaso: '#efece6' } }),
+      peca('bandeja-decor', 265, 170, 0, { elevacao: 90, cores: { metal: '#c9a35a' } }),
     ],
   },
 ]

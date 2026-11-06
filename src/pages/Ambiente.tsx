@@ -7,6 +7,7 @@ import {
   Cubo,
   Desfazer,
   Duplicar,
+  Cadeado,
   Fechar,
   Girar,
   GirarAnti,
@@ -1324,6 +1325,14 @@ function Cena3D({ ambiente }: { ambiente: Estado }) {
   const rotulo = useRef<HTMLDivElement>(null)
   const cena = useRef<CenaAmbiente | null>(null)
   const [modo, setModo] = useState<Modo>(() => modoInicial)
+  /** Trava os móveis: arrastar sobre um deles gira a vista em vez de movê-lo (fica salvo no aparelho). */
+  const [travado, setTravado] = useState(() => {
+    try {
+      return localStorage.getItem('moveis-travados') === '1'
+    } catch {
+      return false
+    }
+  })
   const [areaUso, setAreaUso] = useState(false)
   const selecionado = useSelecao()
   const { aba, parede } = usePainel()
@@ -1371,6 +1380,15 @@ function Cena3D({ ambiente }: { ambiente: Estado }) {
   useEffect(() => {
     cena.current?.definirModo(modo)
   }, [modo])
+
+  useEffect(() => {
+    cena.current?.travarMoveis(travado)
+    try {
+      localStorage.setItem('moveis-travados', travado ? '1' : '0')
+    } catch {
+      // Sem armazenamento (aba anônima): vale só nesta visita.
+    }
+  }, [travado])
 
   useEffect(() => {
     cena.current?.definirAreaUso(areaUso)
@@ -1428,6 +1446,9 @@ function Cena3D({ ambiente }: { ambiente: Estado }) {
             <IconePlanta className="size-4" />
           </BotaoBarra>
           <span className="h-5 w-px bg-tinta/10" />
+          <BotaoBarra ativo={travado} onClick={() => setTravado((t) => !t)} rotulo={travado ? 'Móveis travados' : 'Travar móveis'}>
+            <Cadeado aberto={!travado} />
+          </BotaoBarra>
           <BotaoBarra onClick={() => cena.current?.centralizar()} rotulo="Centralizar">
             <Alvo />
           </BotaoBarra>

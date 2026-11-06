@@ -14,6 +14,33 @@ import { criarPeca, descartarPeca } from './pecas3d'
 import { textura } from './texturas'
 import { asperezaPiso, desenharPiso, tamanhoPiso } from './texturasPiso'
 import { desenharPapel, tamanhoPapel } from './texturasParede'
+import { desenhoReboco, mapasDeRelevo, type OpcoesRelevo } from './relevo'
+import { aoCarregarFoto, foto, fotoNaCor, type Foto } from './texturasFoto'
+
+/** Relevo e brilho de cada revestimento de parede. */
+const relevoPapel: Record<string, OpcoesRelevo> = {
+  lisa: { forca: 0.18, aspereza: 0.9, variacao: 0.1, suavizar: 0.6 },
+  linho: { forca: 0.5, aspereza: 0.95, variacao: 0.1 },
+  listras: { forca: 0.15, aspereza: 0.85, variacao: 0.2 },
+  losangos: { forca: 0.25, aspereza: 0.85, variacao: 0.2 },
+  tijolinho: { forca: 2.6, aspereza: 0.9, variacao: 0.3, suavizar: 1.5 },
+  ripado: { forca: 2, aspereza: 0.6, variacao: 0.5, suavizar: 1 },
+  pedra: { forca: 3, aspereza: 0.88, variacao: 0.3, suavizar: 1.5 },
+  marmore: { forca: 0.12, aspereza: 0.14, variacao: 0.2 },
+  azulejo: { forca: 0.7, aspereza: 0.16, variacao: 1.2, suavizar: 1 },
+  cimento: { forca: 0.7, aspereza: 0.82, variacao: 0.3, suavizar: 2 },
+}
+
+/** Relevo e brilho de cada piso. */
+const relevoPiso: Record<string, OpcoesRelevo> = {
+  madeira: { forca: 1.1, aspereza: 0.5, variacao: 0.6, suavizar: 0.8 },
+  porcelanato: { forca: 0.6, aspereza: 0.22, variacao: 1.4, suavizar: 1 },
+  marmore: { forca: 0.15, aspereza: 0.12, variacao: 0.4 },
+  ladrilho: { forca: 1, aspereza: 0.4, variacao: 0.8, suavizar: 1 },
+  cimento: { forca: 0.8, aspereza: 0.7, variacao: 0.4, suavizar: 2 },
+  carpete: { forca: 1.6, aspereza: 1, variacao: 0, suavizar: 0.4 },
+}
+
 import {
   ALTURA_PORTA,
   alturaDaParede,
@@ -268,6 +295,11 @@ export class CenaAmbiente {
   private texturasPapel = new Map<string, THREE.CanvasTexture>()
   private acabamento: Acabamento | null = null
   private pisoAtual = ''
+  private pisoComFoto = false
+  /** Quando uma foto de revestimento chega, troca o desenho pela foto. */
+  private pararDeOuvirFotos = aoCarregarFoto(() => {
+    if (this.acabamento) this.definirAcabamento(this.acabamento)
+  })
   private paredeDestacada: number | null = null
   private vivo = true
   private container: HTMLElement
@@ -287,16 +319,17 @@ export class CenaAmbiente {
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     this.renderer.toneMapping = THREE.NeutralToneMapping
+    this.renderer.toneMappingExposure = 0.85
     this.renderer.domElement.style.display = 'block'
     container.appendChild(this.renderer.domElement)
 
     this.cena.background = this.fundo
     const pmrem = new THREE.PMREMGenerator(this.renderer)
     this.cena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-    this.cena.environmentIntensity = 0.5
+    this.cena.environmentIntensity = 0.4
     pmrem.dispose()
 
-    this.cena.add(new THREE.HemisphereLight('#ffffff', '#cfc5b6', 0.7))
+    this.cena.add(new THREE.HemisphereLight('#ffffff', '#cfc5b6', 0.35))
     this.sol = new THREE.DirectionalLight('#fff3e2', 1.6)
     this.sol.castShadow = true
     this.sol.shadow.mapSize.setScalar(2048)
@@ -546,9 +579,27 @@ export class CenaAmbiente {
     const n = Math.min(2, Math.max(1, Math.round((c.largura * c.altura) / 150000)))
     const escolhidas = luzes.filter((_, i) => i % Math.max(1, Math.floor(luzes.length / n)) === 0).slice(0, n)
     for (const p of escolhidas) {
-      const luz = new THREE.PointLight('#ffe2b8', aberto ? 0 : 3, 9, 1.6)
+      const luz = new THREE.PointLight('#ffe2b8', aberto ? 0 : 6, 12, 1.5)
       luz.position.set(p.x * M, h - 0.25, p.y * M)
       this.interior.add(luz)
+    }
+    // A laje tapa o sol: uma luz larga no centro do teto, apontada para baixo, desenha a sombra dos móveis
+    // no chão (embaixo da mesa, do sofá, do rack), que é o que mais "assenta" as peças no cômodo.
+    if (!aberto) {
+      const cx = (c.x + c.largura / 2) * M
+      const cy = (c.y + c.altura / 2) * M
+      const raio = Math.hypot(c.largura, c.altura) * M * 0.5
+      const spot = new THREE.SpotLight('#fff0dc', 11, 0, Math.min(1.35, Math.atan(raio / Math.max(0.5, h - 0.1))), 1, 1.2)
+      spot.position.set(cx, h - 0.05, cy)
+      spot.target.position.set(cx, 0, cy)
+      spot.castShadow = true
+      spot.shadow.mapSize.setScalar(2048)
+      spot.shadow.bias = -0.0008
+      spot.shadow.normalBias = 0.02
+      spot.shadow.radius = 10
+      spot.shadow.blurSamples = 16
+      spot.shadow.camera.near = 0.05
+      this.interior.add(spot, spot.target)
     }
   }
 
@@ -609,22 +660,57 @@ export class CenaAmbiente {
     if (!m) return
     const cor = this.acabamento ? corDaParede(this.acabamento, parede) : '#f3eee6'
     const papel = this.acabamento ? papelDaParede(this.acabamento, parede) : 'lisa'
-    const mapa = papel === 'lisa' ? null : this.texturaPapel(papel, cor)
+    // Revestimento fotografado (quando já carregou), senão o desenhado em código.
+    const f = foto(`parede-${papel}`)
+    const mapa = f ? this.texturaFoto(f, cor) : papel === 'lisa' ? null : this.texturaPapel(papel, cor)
     // O papel já vem desenhado na cor da parede.
     m.color.set(mapa ? '#ffffff' : cor)
     if (m.map !== mapa) {
       if (!m.map !== !mapa) m.needsUpdate = true
       m.map = mapa
     }
-    // Tijolo, ripado e pedra ganham relevo a partir do próprio desenho.
-    const relevo = papel === 'tijolinho' || papel === 'ripado' || papel === 'pedra' ? mapa : null
-    if (m.bumpMap !== relevo) {
-      m.bumpMap = relevo
-      m.bumpScale = 2.5
+    let normal: THREE.Texture
+    let rugosidade: THREE.Texture
+    if (f) {
+      normal = f.normal
+      rugosidade = f.aspereza
+      normal.anisotropy = rugosidade.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
+      m.normalScale.setScalar(f.config.relevo)
+      m.roughness = f.config.aspereza
+    } else {
+      // Relevo e brilho tirados do desenho (a pintura lisa ganha o granulado do rolo).
+      const fonte = mapa ? (mapa.image as HTMLCanvasElement) : desenhoReboco()
+      const relevo = mapasDeRelevo(fonte, relevoPapel[papel] ?? relevoPapel.lisa)
+      const repete = mapa ? mapa.repeat.x : 1 / 0.6
+      relevo.normal.repeat.setScalar(repete)
+      relevo.rugosidade.repeat.setScalar(repete)
+      normal = relevo.normal
+      rugosidade = relevo.rugosidade
+      m.normalScale.setScalar(1)
+      m.roughness = 1
+    }
+    if (m.normalMap !== normal || m.roughnessMap !== rugosidade) {
+      m.normalMap = normal
+      m.roughnessMap = rugosidade
+      m.bumpMap = null
       m.needsUpdate = true
     }
-    m.roughness = papel === 'marmore' || papel === 'azulejo' ? 0.35 : 0.92
     m.emissiveIntensity = parede === this.paredeDestacada ? 0.28 : 0
+  }
+
+  /** Foto do revestimento retingida na cor (guardada junto com os papéis, e liberada do mesmo jeito). */
+  private texturaFoto(f: Foto, cor: string) {
+    const chave = `foto${f.cor.src}${cor}`
+    let t = this.texturasPapel.get(chave)
+    if (!t) {
+      t = new THREE.CanvasTexture(fotoNaCor(f, cor))
+      t.colorSpace = THREE.SRGBColorSpace
+      t.wrapS = t.wrapT = THREE.RepeatWrapping
+      t.repeat.setScalar(1 / f.config.metros)
+      t.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
+      this.texturasPapel.set(chave, t)
+    }
+    return t
   }
 
   private texturaPapel(papel: Acabamento['papel'], cor: string) {
@@ -662,17 +748,39 @@ export class CenaAmbiente {
       this.materialPorta.needsUpdate = true
     }
 
-    const piso = `${a.piso}${a.corPiso}`
+    const fp = foto(`piso-${a.piso}`)
+    const piso = `${a.piso}${a.corPiso}${fp ? 'foto' : ''}`
     if (piso === this.pisoAtual) return
     this.pisoAtual = piso
-    const mapaPiso = new THREE.CanvasTexture(desenharPiso(a.piso, a.corPiso))
+    const mapaPiso = new THREE.CanvasTexture(fp ? fotoNaCor(fp, a.corPiso) : desenharPiso(a.piso, a.corPiso))
     mapaPiso.colorSpace = THREE.SRGBColorSpace
     mapaPiso.wrapS = mapaPiso.wrapT = THREE.RepeatWrapping
-    mapaPiso.repeat.setScalar(1 / tamanhoPiso[a.piso])
+    mapaPiso.repeat.setScalar(1 / (fp ? fp.config.metros : tamanhoPiso[a.piso]))
     mapaPiso.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
     this.materialPiso.map?.dispose()
+    // Os mapas das fotos são compartilhados: só libera os gerados a partir do desenho.
+    if (!this.pisoComFoto) {
+      this.materialPiso.normalMap?.dispose()
+      this.materialPiso.roughnessMap?.dispose()
+    }
+    this.pisoComFoto = !!fp
     this.materialPiso.map = mapaPiso
-    this.materialPiso.roughness = asperezaPiso[a.piso]
+    if (fp) {
+      fp.normal.anisotropy = fp.aspereza.anisotropy = mapaPiso.anisotropy
+      this.materialPiso.normalMap = fp.normal
+      this.materialPiso.roughnessMap = fp.aspereza
+      this.materialPiso.normalScale.setScalar(fp.config.relevo)
+      this.materialPiso.roughness = fp.config.aspereza
+    } else {
+      const relevoP = mapasDeRelevo(mapaPiso.image as HTMLCanvasElement, relevoPiso[a.piso] ?? { forca: 0.5, aspereza: asperezaPiso[a.piso] })
+      relevoP.normal.repeat.copy(mapaPiso.repeat)
+      relevoP.rugosidade.repeat.copy(mapaPiso.repeat)
+      relevoP.normal.anisotropy = relevoP.rugosidade.anisotropy = mapaPiso.anisotropy
+      this.materialPiso.normalMap = relevoP.normal
+      this.materialPiso.roughnessMap = relevoP.rugosidade
+      this.materialPiso.normalScale.setScalar(1)
+      this.materialPiso.roughness = 1
+    }
     this.materialPiso.needsUpdate = true
   }
 
@@ -1153,9 +1261,18 @@ export class CenaAmbiente {
     return this.raioDe(e).ray.intersectPlane(this.chao, new THREE.Vector3())
   }
 
+  /** Móveis travados: arrastar sempre gira/move a vista, mesmo começando em cima de um móvel. */
+  private travado = false
+
+  travarMoveis(travar: boolean) {
+    this.travado = travar
+    if (travar && this.arraste) this.aoSoltar(new PointerEvent('pointerup'))
+  }
+
   private aoPressionar = (e: PointerEvent) => {
     if (!e.isPrimary) return
     this.toque = { x: e.clientX, y: e.clientY }
+    if (this.travado) return
     const id = this.moveis(e)
     if (!id) return
     const o = this.objetos.get(id)!
@@ -1222,6 +1339,14 @@ export class CenaAmbiente {
         this.cb.aoMover(Object.fromEntries([o, ...a.carona.map((c) => c.o)].map((m) => [m.item.id, posicao(m)])))
       }
     } else if (this.toque && Math.hypot(e.clientX - this.toque.x, e.clientY - this.toque.y) < 4) {
+      // Com os móveis travados, um toque (sem arrastar) num móvel ainda o seleciona.
+      const tocado = this.travado ? this.moveis(e) : null
+      if (tocado) {
+        this.selecionar(tocado)
+        this.cb.aoSelecionar(tocado)
+        this.toque = null
+        return
+      }
       // Toque no fundo, sem girar: tira a seleção. Se foi numa parede, avisa (para pintar).
       this.selecionar(null)
       this.cb.aoSelecionar(null)
@@ -1356,6 +1481,7 @@ export class CenaAmbiente {
     this.vivo = false
     this.renderer.setAnimationLoop(null)
     this.observador.disconnect()
+    this.pararDeOuvirFotos()
     this.controles3d.dispose()
     this.controlesPlanta.dispose()
     const el = this.renderer.domElement

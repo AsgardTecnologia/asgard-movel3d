@@ -1,11 +1,37 @@
 import { useSyncExternalStore } from 'react'
+import type { TipoTextura } from './texturas'
 
 /** Ponto na planta, em centímetros. x para a direita, y para baixo (como na tela vista de cima). */
 export type Ponto = { x: number; y: number }
 export type Canto = Ponto & { raio: number }
-export type Porta = { id: string; parede: number; /** Centro da porta ao longo da parede, de 0 a 1. */ t: number; largura: number }
+export type Porta = {
+  id: string
+  parede: number
+  /** Centro da porta ao longo da parede, de 0 a 1. */
+  t: number
+  largura: number
+  /** Altura do vão, em cm (padrão 210). */
+  altura?: number
+}
 
-export type Planta = { formato: Formato; cantos: Canto[]; portas: Porta[]; peDireito: number }
+/** Janela (ou porta de vidro, com peitoril 0). Não ocupa área no chão como a porta. */
+export type Janela = { id: string; parede: number; t: number; largura: number; altura: number; peitoril: number }
+
+export type Planta = {
+  formato: Formato
+  cantos: Canto[]
+  portas: Porta[]
+  janelas: Janela[]
+  peDireito: number
+  /** Altura de cada parede (pelo índice), quando diferente do pé-direito. 0 = sem parede (área aberta). */
+  alturas?: Record<number, number>
+  /** Vista de fora: paredes inteiras, laje no topo e calçada em volta (fachada). */
+  fachada?: boolean
+  /** Gramado em volta do piso (áreas externas e fachada). */
+  grama?: boolean
+  /** Ponto de vista da vista de dentro: de onde se olha e para onde (altura em cm). */
+  vista?: { de: Ponto; para: Ponto & { h: number } }
+}
 
 export type Item = {
   id: string
@@ -18,23 +44,68 @@ export type Item = {
   giro: number
   /** Altura da base em relação ao chão, em cm (decoração em cima de uma mesa, por exemplo). */
   elevacao?: number
+  /** Peças de ambientação (src/data/pecas.ts): medidas escolhidas e cor de cada parte. */
+  medidas?: { l: number; p: number; a: number }
+  cores?: Record<string, string>
 }
 
-export type Etapa = 'planta' | '3d'
-export type Ambiente = { etapa: Etapa; planta: Planta; itens: Item[]; acabamento: Acabamento }
+export type Etapa = 'galeria' | 'planta' | '3d'
+export type Ambiente = {
+  etapa: Etapa
+  planta: Planta
+  itens: Item[]
+  acabamento: Acabamento
+  /** Nome do ambiente pronto que deu origem a este, se houver. */
+  nome?: string
+}
 
 export type TipoPiso = 'madeira' | 'porcelanato' | 'ladrilho' | 'cimento' | 'marmore' | 'carpete'
+export type TipoPapel =
+  | 'lisa'
+  | 'linho'
+  | 'listras'
+  | 'losangos'
+  | 'tijolinho'
+  | 'ripado'
+  | 'marmore'
+  | 'azulejo'
+  | 'pedra'
+  | 'cimento'
 
 export type Acabamento = {
   /** Cor de todas as paredes. */
   paredes: string
   /** Cor de cada parede (pelo índice). Null quando todas são iguais. */
   porParede: Record<number, string> | null
+  /** Papel de parede (ou pintura lisa), desenhado na cor de cada parede. */
+  papel: TipoPapel
+  /** Papel de cada parede, no modo "uma cor por parede" (sem entrada, vale o `papel`). */
+  papelPorParede: Record<number, TipoPapel>
   piso: TipoPiso
   corPiso: string
+  /** Cor dos caixilhos das janelas e da folha das portas. */
+  esquadrias: string
+  portas: string
 }
 
-export type OpcaoCor = { nome: string; hex: string }
+export type OpcaoCor = { nome: string; hex: string; textura?: TipoTextura; metal?: boolean }
+
+export const coresEsquadria: OpcaoCor[] = [
+  { nome: 'Branco', hex: '#f4f3ef' },
+  { nome: 'Preto', hex: '#232325' },
+  { nome: 'Grafite', hex: '#4b4e53' },
+  { nome: 'Bronze', hex: '#5a4636' },
+  { nome: 'Champagne', hex: '#c8b89a' },
+]
+
+export const coresPorta: OpcaoCor[] = [
+  { nome: 'Branco', hex: '#f1efea' },
+  { nome: 'Freijó', hex: '#b5895c', textura: 'madeira' },
+  { nome: 'Carvalho', hex: '#c9a57c', textura: 'madeira' },
+  { nome: 'Nogueira', hex: '#6e4a33', textura: 'madeira' },
+  { nome: 'Preto', hex: '#232325' },
+  { nome: 'Verde musgo', hex: '#4c5a45' },
+]
 
 export const coresParede: OpcaoCor[] = [
   { nome: 'Off-white', hex: '#f3eee6' },
@@ -47,6 +118,10 @@ export const coresParede: OpcaoCor[] = [
   { nome: 'Terracota', hex: '#c27a58' },
   { nome: 'Verde musgo', hex: '#5f6b56' },
   { nome: 'Grafite', hex: '#454a52' },
+  { nome: 'Preto', hex: '#2a2a2c' },
+  { nome: 'Madeira', hex: '#9a6b45' },
+  { nome: 'Tijolo', hex: '#b0613f' },
+  { nome: 'Pedra', hex: '#a59d90' },
 ]
 
 export const pisos: { id: TipoPiso; rotulo: string; cores: OpcaoCor[] }[] = [
@@ -111,9 +186,32 @@ export const pisos: { id: TipoPiso; rotulo: string; cores: OpcaoCor[] }[] = [
   },
 ]
 
-const acabamentoPadrao: Acabamento = { paredes: '#f3eee6', porParede: null, piso: 'porcelanato', corPiso: '#d3c5af' }
+export const papeis: { id: TipoPapel; rotulo: string }[] = [
+  { id: 'lisa', rotulo: 'Pintura lisa' },
+  { id: 'linho', rotulo: 'Linho' },
+  { id: 'listras', rotulo: 'Listras' },
+  { id: 'losangos', rotulo: 'Geométrico' },
+  { id: 'tijolinho', rotulo: 'Tijolinho' },
+  { id: 'ripado', rotulo: 'Ripado' },
+  { id: 'marmore', rotulo: 'Mármore' },
+  { id: 'azulejo', rotulo: 'Azulejo' },
+  { id: 'pedra', rotulo: 'Pedra' },
+  { id: 'cimento', rotulo: 'Cimento' },
+]
+
+export const acabamentoPadrao: Acabamento = {
+  paredes: '#f3eee6',
+  porParede: null,
+  papel: 'lisa',
+  papelPorParede: {},
+  piso: 'porcelanato',
+  corPiso: '#d3c5af',
+  esquadrias: '#232325',
+  portas: '#f1efea',
+}
 
 export const corDaParede = (a: Acabamento, parede: number) => a.porParede?.[parede] ?? a.paredes
+export const papelDaParede = (a: Acabamento, parede: number) => (a.porParede && a.papelPorParede?.[parede]) || a.papel
 
 export type Formato = 'retangulo' | 'quadrado' | 'l' | 'u' | 't' | 'z' | 'arredondado' | 'corredor'
 
@@ -141,6 +239,9 @@ export const formatos: { id: Formato; rotulo: string; cantos: () => Canto[] }[] 
 export const PE_DIREITO = { min: 220, max: 500, passo: 10 }
 export const RAIO_CANTO = 100
 export const LARGURA_PORTA = 80
+export const ALTURA_PORTA = 210
+export const JANELA_PADRAO = { largura: 150, altura: 120, peitoril: 100 }
+export const PORTA_VIDRO = { largura: 200, altura: 220, peitoril: 0 }
 /** Espaço em volta de cada móvel para circular e usar. */
 export const AREA_USO = 50
 
@@ -148,8 +249,13 @@ const novaPlanta = (formato: Formato = 'retangulo', peDireito = 280): Planta => 
   formato,
   cantos: formatos.find((f) => f.id === formato)!.cantos(),
   portas: [],
+  janelas: [],
   peDireito,
 })
+
+/** Altura de uma parede: a própria, ou o pé-direito. */
+export const alturaDaParede = (planta: Planta, parede: number) =>
+  Math.min(planta.alturas?.[parede] ?? planta.peDireito, planta.peDireito)
 
 // --- Geometria ---------------------------------------------------------------
 
@@ -298,6 +404,8 @@ export type Pegada = {
   /** Altura da base e do topo, em cm. */
   base: number
   topo: number
+  /** Rente ao chão (tapete, deck, piscina): não pede área de uso. */
+  rasteira?: boolean
 }
 export type Situacao = 'livre' | 'apertado' | 'naoCabe'
 
@@ -363,15 +471,16 @@ export const areasPortas = (planta: Planta, geo: Geometria) =>
     return [[sub(centro, meia), soma(centro, meia), soma(soma(centro, meia), fundo), soma(sub(centro, meia), fundo)]]
   })
 
-export function situacao(alvo: Pegada, outras: Pegada[], geo: Geometria, portas: Ponto[][]): Situacao {
+/** `externo`: na fachada as peças ficam do lado de fora, então as paredes não limitam. */
+export function situacao(alvo: Pegada, outras: Pegada[], geo: Geometria, portas: Ponto[][], externo = false): Situacao {
   const ret = vertices(alvo)
   const vizinhas = outras.filter((o) => mesmaAltura(alvo, o))
-  if (!cabeNoComodo(ret, geo.contorno) || vizinhas.some((o) => sobrepoem(ret, vertices(o)))) return 'naoCabe'
+  if ((!externo && !cabeNoComodo(ret, geo.contorno)) || vizinhas.some((o) => sobrepoem(ret, vertices(o)))) return 'naoCabe'
   // Em cima de outro móvel não precisa de espaço para circular.
-  if (alvo.base > 0) return 'livre'
+  if (alvo.base > 0 || alvo.rasteira) return 'livre'
   const comFolga = vertices(alvo, AREA_USO)
   if (
-    !cabeNoComodo(comFolga, geo.contorno) ||
+    (!externo && !cabeNoComodo(comFolga, geo.contorno)) ||
     vizinhas.some((o) => sobrepoem(comFolga, vertices(o))) ||
     portas.some((p) => sobrepoem(ret, p))
   )
@@ -395,17 +504,27 @@ const ler = (): Ambiente => {
   try {
     const salvo = JSON.parse(localStorage.getItem(CHAVE) ?? 'null') as Ambiente | null
     if ((salvo?.planta?.cantos?.length ?? 0) >= 3 && salvo && Array.isArray(salvo.itens))
-      return { ...salvo, acabamento: { ...acabamentoPadrao, ...salvo.acabamento } }
+      return {
+        ...salvo,
+        planta: { ...salvo.planta, janelas: salvo.planta.janelas ?? [] },
+        acabamento: { ...acabamentoPadrao, ...salvo.acabamento },
+      }
   } catch {
     // Sem acesso ao armazenamento (aba anônima, prévia): começa do zero.
   }
-  return { etapa: 'planta', planta: novaPlanta(), itens: [], acabamento: acabamentoPadrao }
+  return vazio()
 }
+
+const vazio = (): Ambiente => ({ etapa: 'galeria', planta: novaPlanta(), itens: [], acabamento: acabamentoPadrao })
+
+/** O ambiente tem algo feito pela pessoa (para avisar antes de trocar por um pronto). */
+export const temConteudo = (a: Ambiente) =>
+  a.itens.length > 0 || !!a.nome || a.planta.portas.length > 0 || a.planta.janelas.length > 0
 
 let estado = ler()
 const ouvintes = new Set<() => void>()
 /** Desfazer separado por etapa: a planta e os móveis. */
-const historico: Record<Etapa, Ambiente[]> = { planta: [], '3d': [] }
+const historico: Record<Etapa, Ambiente[]> = { galeria: [], planta: [], '3d': [] }
 
 const salvar = () => {
   try {
@@ -445,7 +564,13 @@ export function desfazer(etapa: Etapa) {
   definir(
     etapa === 'planta'
       ? { ...estado, planta: anterior.planta }
-      : { ...estado, itens: anterior.itens, acabamento: anterior.acabamento },
+      : {
+          ...estado,
+          itens: anterior.itens,
+          acabamento: anterior.acabamento,
+          // Portas, janelas e alturas também se mexem no 3D.
+          planta: { ...estado.planta, portas: anterior.planta.portas, janelas: anterior.planta.janelas, alturas: anterior.planta.alturas },
+        },
   )
 }
 
@@ -462,9 +587,13 @@ export function escolherFormato(formato: Formato) {
   definir({
     ...estado,
     planta: novaPlanta(formato, estado.planta.peDireito),
-    acabamento: { ...acabamento, porParede: acabamento.porParede && {} },
+    acabamento: { ...acabamento, porParede: acabamento.porParede && {}, papelPorParede: {} },
   })
 }
+
+/** Portas, janelas e altura das paredes mexidas no 3D: entram no desfazer do 3D. */
+export const definirAberturas = (mudanca: Partial<Pick<Planta, 'portas' | 'janelas' | 'alturas'>>, desfazivel = true) =>
+  definir({ ...estado, planta: { ...estado.planta, ...mudanca } }, desfazivel ? '3d' : undefined)
 
 /** Cores das paredes e o piso. `desfazivel: false` enquanto o seletor de cor livre está sendo arrastado. */
 export const definirAcabamento = (mudanca: Partial<Acabamento>, desfazivel = true) =>
@@ -476,7 +605,43 @@ export const marcarDesfazer = (etapa: Etapa) => {
 }
 
 export function adicionarItem(slug: string, cor: number) {
-  definir({ ...estado, itens: [...estado.itens, { id: id(), slug, cor, x: null, y: null, giro: 0 }] }, '3d')
+  const item: Item = { id: id(), slug, cor, x: null, y: null, giro: 0 }
+  definir({ ...estado, itens: [...estado.itens, item] }, '3d')
+  return item.id
+}
+
+/** Peça de ambientação nas medidas e cores padrão. Devolve o id, para já selecionar. */
+export function adicionarPeca(slug: string, medidas: Item['medidas'], cores: Record<string, string>, elevacao?: number) {
+  const item: Item = { id: id(), slug, cor: 0, x: null, y: null, giro: 0, medidas, cores, elevacao }
+  definir({ ...estado, itens: [...estado.itens, item] }, '3d')
+  return item.id
+}
+
+/** Troca tudo por um ambiente pronto (o desfazer dos móveis volta para o anterior). */
+export function carregarAmbiente(pronto: Omit<Ambiente, 'etapa' | 'acabamento'> & { acabamento: Partial<Acabamento> }) {
+  historico.planta = []
+  historico['3d'] = []
+  definir({
+    etapa: '3d',
+    nome: pronto.nome,
+    planta: structuredClone(pronto.planta),
+    acabamento: { ...acabamentoPadrao, ...structuredClone(pronto.acabamento) },
+    itens: pronto.itens.map((i) => ({ ...structuredClone(i), id: id() })),
+  })
+}
+
+/** Volta tudo ao início (totem: próximo cliente). */
+export function reiniciarAmbiente() {
+  historico.planta = []
+  historico['3d'] = []
+  definir(vazio())
+}
+
+/** Cômodo vazio, a partir do desenho da planta. */
+export function comecarDoZero() {
+  historico.planta = []
+  historico['3d'] = []
+  definir({ ...vazio(), etapa: 'planta' })
 }
 
 export function atualizarItem(itemId: string, mudanca: Partial<Item>, desfazivel = true) {

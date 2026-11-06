@@ -13,27 +13,81 @@ export const tamanhoPiso: Record<TipoPiso, number> = {
 /** Brilho do acabamento (roughness do material): mármore e porcelanato refletem mais. */
 export const asperezaPiso: Record<TipoPiso, number> = {
   madeira: 0.62,
-  porcelanato: 0.32,
-  marmore: 0.22,
+  porcelanato: 0.42,
+  marmore: 0.36,
   ladrilho: 0.5,
   cimento: 0.78,
   carpete: 1,
 }
 
-const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+export const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
 /** Clareia (t > 0) ou escurece (t < 0) a cor. */
-const tom = (hex: string, t: number, alfa = 1) => {
+export const tom = (hex: string, t: number, alfa = 1) => {
   const c = rgb(hex).map((v) => Math.round(t > 0 ? v + (255 - v) * t : v * (1 + t)))
   return `rgba(${c.join(',')},${alfa})`
 }
 
 /** Aleatório com semente: o mesmo piso sai sempre igual. */
-const sorteio = (semente: number) => () => {
+export const sorteio = (semente: number) => () => {
   semente = (semente * 16807) % 2147483647
   return (semente - 1) / 2147483646
 }
 
 const LADO = 1024
+
+/** Ruído suave que se repete a cada lado do desenho (a textura emenda sem costura). */
+function ruidoPeriodico(r: () => number, n: number) {
+  const grade = Float32Array.from({ length: n * n }, () => r())
+  const em = (i: number, j: number) => grade[(((j % n) + n) % n) * n + (((i % n) + n) % n)]
+  return (u: number, v: number) => {
+    const x = u * n
+    const y = v * n
+    const i = Math.floor(x)
+    const j = Math.floor(y)
+    const fx = x - i
+    const fy = y - j
+    const sx = fx * fx * (3 - 2 * fx)
+    const sy = fy * fy * (3 - 2 * fy)
+    const a = em(i, j) + (em(i + 1, j) - em(i, j)) * sx
+    const b = em(i, j + 1) + (em(i + 1, j + 1) - em(i, j + 1)) * sx
+    return a + (b - a) * sy
+  }
+}
+
+/**
+ * Mármore: nuvens suaves e veios finos que serpenteiam (um seno torcido por ruído em várias escalas),
+ * como numa placa de verdade, em vez de traços soltos.
+ */
+function desenharMarmore(g: CanvasRenderingContext2D, cor: string, lado: number, r: () => number) {
+  const oitavas = [4, 8, 16, 32].map((n) => ruidoPeriodico(r, n))
+  const turbulencia = (u: number, v: number) =>
+    oitavas.reduce((s, f, k) => s + (f(u, v) - 0.5) / 2 ** k, 0)
+  const nuvem = ruidoPeriodico(r, 3)
+  const [cr, cg, cb] = rgb(cor)
+  const escuro = cr + cg + cb < 300
+  // Veio: escuro no mármore claro, claro no escuro; um pouco puxado para o cinza quente.
+  const veio = escuro ? [235, 228, 216] : [Math.max(0, cr - 95), Math.max(0, cg - 92), Math.max(0, cb - 85)]
+  const img = g.createImageData(lado, lado)
+  for (let y = 0; y < lado; y++)
+    for (let x = 0; x < lado; x++) {
+      const u = x / lado
+      const v = y / lado
+      const t = turbulencia(u, v)
+      // Veio principal (fino e marcado) e um secundário (largo e suave), em direções diferentes.
+      const v1 = Math.abs(Math.sin(Math.PI * 2 * (2 * u + v) + t * 9))
+      const v2 = Math.abs(Math.sin(Math.PI * 2 * (u - 3 * v) + t * 6 + 1.7))
+      const forte = (1 - Math.min(1, v1 / 0.05)) ** 2 * 0.75
+      const fraco = (1 - Math.min(1, v2 / 0.22)) ** 2 * 0.22
+      const k = Math.min(0.85, forte + fraco)
+      const brilho = 1 + (nuvem(u, v) - 0.5) * 0.07 + t * 0.04
+      const i = (y * lado + x) * 4
+      img.data[i] = Math.min(255, (cr * (1 - k) + veio[0] * k) * brilho)
+      img.data[i + 1] = Math.min(255, (cg * (1 - k) + veio[1] * k) * brilho)
+      img.data[i + 2] = Math.min(255, (cb * (1 - k) + veio[2] * k) * brilho)
+      img.data[i + 3] = 255
+    }
+  g.putImageData(img, 0, 0)
+}
 
 export function desenharPiso(tipo: TipoPiso, cor: string, lado = LADO) {
   const canvas = document.createElement('canvas')
@@ -117,25 +171,20 @@ export function desenharPiso(tipo: TipoPiso, cor: string, lado = LADO) {
       }
     rejunte(passo, false)
   } else if (tipo === 'marmore') {
-    manchas(30, lado / 5, 0.1)
-    const escuro = rgb(cor).reduce((s, v) => s + v, 0) < 300
-    for (let i = 0; i < 26; i++) {
-      g.strokeStyle = escuro ? tom(cor, 0.5 + r() * 0.3, 0.35 + r() * 0.3) : tom(cor, -0.25 - r() * 0.25, 0.25 + r() * 0.3)
-      g.lineWidth = 0.6 + r() * 2.2
-      g.beginPath()
-      let x = r() * lado
-      let y = r() * lado
-      g.moveTo(x, y)
-      for (let k = 0; k < 8; k++) {
-        const nx = x + (r() - 0.3) * lado * 0.25
-        const ny = y + (r() - 0.5) * lado * 0.18
-        g.quadraticCurveTo(x + (r() - 0.5) * 80, y + (r() - 0.5) * 80, nx, ny)
-        x = nx
-        y = ny
-      }
-      g.stroke()
+    // O mármore é calculado pixel a pixel: no máximo 512 de lado, ampliado depois (veio suave não perde).
+    const calc = Math.min(lado, 512)
+    if (calc === lado) desenharMarmore(g, cor, lado, r)
+    else {
+      const menor = document.createElement('canvas')
+      menor.width = menor.height = calc
+      desenharMarmore(menor.getContext('2d')!, cor, calc, r)
+      g.imageSmoothingQuality = 'high'
+      g.drawImage(menor, 0, 0, lado, lado)
     }
-    rejunte(0.8 * px, false)
+    // Rejunte fino e claro, quase invisível, como no mármore assentado.
+    g.globalAlpha = 0.55
+    rejunte(0.8 * px, rgb(cor).reduce((s, v) => s + v, 0) < 300)
+    g.globalAlpha = 1
   } else if (tipo === 'ladrilho') {
     const passo = 0.2 * px
     for (let x = 0; x < lado; x += passo)

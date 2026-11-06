@@ -29,7 +29,8 @@ export function CardMovel({
           enquadramento={movel.enquadramento}
           className={`rounded-[20px] ${largo ? 'aspect-[4/3] sm:aspect-[8/5]' : aspecto}`}
         />
-        <span className="absolute top-4 left-4 flex gap-1.5">
+        {/* Limitado para não passar por baixo do botão "Ambiente" nos cards estreitos. */}
+        <span className="absolute top-4 left-4 flex max-w-[calc(100%-8.5rem)] flex-wrap gap-1.5">
           <span className="rounded-full bg-linho/90 px-3 py-1.5 text-[11px] font-bold tracking-wide text-tinta/80 backdrop-blur">
             {movel.categoria}
           </span>

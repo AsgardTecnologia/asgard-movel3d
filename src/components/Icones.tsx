@@ -161,6 +161,21 @@ export const Porta = ({ className = 'size-4' }: Props) => (
   </svg>
 )
 
+/** Janela de correr; `vidro`: porta de vidro até o chão. */
+export const Janela = ({ className = 'size-4', vidro }: Props & { vidro?: boolean }) => (
+  <svg {...base} className={className}>
+    {vidro ? <path d="M4 21V4h16v17M12 4v17M3 21h18" /> : <path d="M4 5h16v13H4zM12 5v13M4 11.5h16M3 18h18" />}
+  </svg>
+)
+
+/** Pessoa: vista de dentro do ambiente, na altura dos olhos. */
+export const Pessoa = ({ className = 'size-4' }: Props) => (
+  <svg {...base} className={className}>
+    <circle cx="12" cy="5" r="2.2" />
+    <path d="M9 21l1-7-2-1 1.5-4.5h5L16 13l-2 1 1 7" />
+  </svg>
+)
+
 export const Mover = ({ className = 'size-4' }: Props) => (
   <svg {...base} className={className}>
     <path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" />

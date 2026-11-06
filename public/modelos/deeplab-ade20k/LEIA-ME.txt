@@ -1,0 +1,6 @@
+DeepLab v3 (MobileNetV2), treinado no ADE20K, convertido para TensorFlow.js.
+Origem: https://tfhub.dev/tensorflow/tfjs-model/deeplab/ade20k/1/default/1
+Licença: Apache 2.0 (TensorFlow Models).
+Pesos quantizados para uint8 (min/escala por tensor): 9 MB viraram ~2,4 MB.
+Usado pelo provador com a câmera (src/lib/raCamera.ts) para conferir a área da cor escolhida:
+só vale o que a rede diz ser o mesmo tipo de superfície do ponto tocado (parede, piso…).

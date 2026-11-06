@@ -4,7 +4,9 @@ import {
   comprimento,
   desfazer,
   definirPlanta,
+  alturaDaParede,
   geometria,
+  JANELA_PADRAO,
   LARGURA_PORTA,
   limitarPorta,
   marcarDesfazer,
@@ -19,12 +21,16 @@ import {
   type Planta,
   type Ponto,
 } from '../lib/ambiente'
-import { Desfazer, Lixeira, Mais, Menos, Mover, Porta } from './Icones'
+import { Desfazer, Janela, Lixeira, Mais, Menos, Porta } from './Icones'
 
 type Arraste =
   | { tipo: 'canto'; i: number }
   | { tipo: 'parede'; i: number }
   | { tipo: 'porta'; id: string }
+  | { tipo: 'janela'; id: string }
+
+/** O que um toque na parede coloca. */
+type Ferramenta = 'porta' | 'janela'
 
 type Gesto = Arraste & { inicio: Ponto; tela: Ponto; cantos: Canto[]; moveu: boolean }
 
@@ -36,6 +42,7 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
   const svg = useRef<SVGSVGElement>(null)
   const gesto = useRef<Gesto | null>(null)
   const [portaAtiva, setPortaAtiva] = useState<string | null>(null)
+  const [ferramenta, setFerramenta] = useState<Ferramenta>('porta')
   const [tamanho, setTamanho] = useState({ l: 800, a: 600 })
   const geo = useMemo(() => geometria(planta.cantos), [planta.cantos])
 
@@ -101,15 +108,18 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
       if (geometria(cantos).paredes.some((pa) => pa.comprimento < 30)) return
       definirPlanta({ ...planta, cantos }, false)
     } else {
-      const porta = planta.portas.find((pt) => pt.id === g.id)
-      const parede = geo.paredes[porta?.parede ?? -1]
-      if (!porta || !parede) return
+      const lista = g.tipo === 'porta' ? planta.portas : planta.janelas
+      const abertura = lista.find((pt) => pt.id === g.id)
+      const parede = geo.paredes[abertura?.parede ?? -1]
+      if (!abertura || !parede) return
       const ab = sub(parede.b, parede.a)
       const t = ((p.x - parede.a.x) * ab.x + (p.y - parede.a.y) * ab.y) / parede.comprimento ** 2
-      const portas = planta.portas.map((pt) =>
-        pt.id === porta.id ? { ...pt, t: limitarPorta(parede, t, pt.largura) } : pt,
+      const mover = <T extends { id: string; largura: number; t: number }>(itens: T[]) =>
+        itens.map((pt) => (pt.id === abertura.id ? { ...pt, t: limitarPorta(parede, t, pt.largura) } : pt))
+      definirPlanta(
+        g.tipo === 'porta' ? { ...planta, portas: mover(planta.portas) } : { ...planta, janelas: mover(planta.janelas) },
+        false,
       )
-      definirPlanta({ ...planta, portas }, false)
     }
   }
 
@@ -125,28 +135,39 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
       definirPlanta({ ...planta, cantos })
     } else if (g.tipo === 'parede') {
       const parede = geo.paredes[g.i]
-      if (comprimento(sub(parede.fim, parede.inicio)) < LARGURA_PORTA + 10) return
+      const largura = ferramenta === 'porta' ? LARGURA_PORTA : JANELA_PADRAO.largura
+      if (comprimento(sub(parede.fim, parede.inicio)) < largura + 10 || alturaDaParede(planta, g.i) < 1) return
       const p = paraPlanta(e)
       const ab = sub(parede.b, parede.a)
-      const t = ((p.x - parede.a.x) * ab.x + (p.y - parede.a.y) * ab.y) / parede.comprimento ** 2
-      const porta = { id: novoIdPorta(), parede: g.i, t: limitarPorta(parede, t, LARGURA_PORTA), largura: LARGURA_PORTA }
-      definirPlanta({ ...planta, portas: [...planta.portas, porta] })
-      setPortaAtiva(porta.id)
+      const t = limitarPorta(parede, ((p.x - parede.a.x) * ab.x + (p.y - parede.a.y) * ab.y) / parede.comprimento ** 2, largura)
+      const id = novoIdPorta()
+      if (ferramenta === 'porta') definirPlanta({ ...planta, portas: [...planta.portas, { id, parede: g.i, t, largura }] })
+      else definirPlanta({ ...planta, janelas: [...planta.janelas, { id, parede: g.i, t, ...JANELA_PADRAO }] })
+      setPortaAtiva(id)
     } else {
       setPortaAtiva(g.id)
     }
   }
 
   const porta = planta.portas.find((p) => p.id === portaAtiva)
-  const mudarPorta = (largura: number) => {
-    if (!porta) return
-    const parede = geo.paredes[porta.parede]
-    const nova = Math.max(60, Math.min(240, largura))
+  const janela = planta.janelas.find((p) => p.id === portaAtiva)
+  const ativa = porta ?? janela
+  const mudarLargura = (largura: number) => {
+    if (!ativa) return
+    const parede = geo.paredes[ativa.parede]
+    const nova = Math.max(porta ? 60 : 40, Math.min(porta ? 240 : 600, largura))
     if (comprimento(sub(parede.fim, parede.inicio)) < nova) return
+    const ajustar = <T extends { id: string; largura: number; t: number }>(itens: T[]) =>
+      itens.map((p) => (p.id === ativa.id ? { ...p, largura: nova, t: limitarPorta(parede, p.t, nova) } : p))
+    definirPlanta(porta ? { ...planta, portas: ajustar(planta.portas) } : { ...planta, janelas: ajustar(planta.janelas) })
+  }
+  const removerAtiva = () => {
     definirPlanta({
       ...planta,
-      portas: planta.portas.map((p) => (p.id === porta.id ? { ...p, largura: nova, t: limitarPorta(parede, p.t, nova) } : p)),
+      portas: planta.portas.filter((p) => p.id !== portaAtiva),
+      janelas: planta.janelas.filter((p) => p.id !== portaAtiva),
     })
+    setPortaAtiva(null)
   }
 
   const parede = 7 * px
@@ -176,6 +197,22 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
 
         <polygon points={contorno} fill="var(--color-terracota)" fillOpacity="0.1" />
         <polygon points={contorno} fill="none" stroke="var(--color-tinta)" strokeWidth={parede} strokeLinejoin="round" />
+        {geo.paredes.map((p, i) =>
+          alturaDaParede(planta, i) < 1 ? (
+            <g key={`ab${i}`} className="pointer-events-none">
+              <line x1={p.inicio.x} y1={p.inicio.y} x2={p.fim.x} y2={p.fim.y} stroke="var(--color-estudio)" strokeWidth={parede + 2 * px} />
+              <line
+                x1={p.inicio.x}
+                y1={p.inicio.y}
+                x2={p.fim.x}
+                y2={p.fim.y}
+                stroke="var(--color-tinta)"
+                strokeWidth={2 * px}
+                strokeDasharray={`${8 * px} ${6 * px}`}
+              />
+            </g>
+          ) : null,
+        )}
 
         {/* Medidas de cada parede, do lado de fora. */}
         {geo.paredes.map((p, i) => {
@@ -251,6 +288,35 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
           )
         })}
 
+        {planta.janelas.map((j) => {
+          const p = geo.paredes[j.parede]
+          if (!p) return null
+          const centro = pontoNaParede(p, j.t)
+          const dir = escalar(sub(p.b, p.a), 1 / p.comprimento)
+          const a = sub(centro, escalar(dir, j.largura / 2))
+          const b = soma(centro, escalar(dir, j.largura / 2))
+          const ativa = j.id === portaAtiva
+          const cor = ativa ? 'var(--color-terracota)' : 'var(--color-tinta)'
+          const desvio = escalar(p.normal, parede / 3)
+          return (
+            <g key={j.id} className="cursor-grab" onPointerDown={(e) => comecar(e, { tipo: 'janela', id: j.id })}>
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--color-linho)" strokeWidth={parede + 2 * px} />
+              {[-1, 0, 1].map((k) => (
+                <line
+                  key={k}
+                  x1={a.x + desvio.x * k}
+                  y1={a.y + desvio.y * k}
+                  x2={b.x + desvio.x * k}
+                  y2={b.y + desvio.y * k}
+                  stroke={cor}
+                  strokeWidth={(k ? 1.5 : 2.5) * px}
+                />
+              ))}
+              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" strokeWidth={24 * px} />
+            </g>
+          )
+        })}
+
         {/* Alças no meio das paredes. */}
         {geo.paredes.map((p, i) => {
           const meio = escalar(soma(p.inicio, p.fim), 0.5)
@@ -288,46 +354,60 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
         ))}
       </svg>
 
-      <p className="pointer-events-none absolute top-4 left-4 inline-flex max-w-[calc(100%-150px)] items-center gap-2 rounded-full bg-linho/90 px-4 py-2 text-xs font-bold shadow-sm backdrop-blur">
-        <Mover className="size-4 shrink-0 text-terracota" />
-        <span className="truncate">Arraste paredes, bolinhas e portas · toque para editar</span>
-      </p>
+      <div className="absolute top-4 left-4 flex max-w-[calc(100%-5.5rem)] items-center overflow-x-auto [scrollbar-width:none] sm:max-w-[calc(100%-150px)] gap-1 rounded-full bg-linho/90 p-1 shadow-sm backdrop-blur">
+        <span className="hidden pr-1 pl-3 text-xs font-bold text-pedra sm:inline">Toque na parede para pôr</span>
+        {(
+          [
+            ['porta', 'Porta', <Porta key="porta" className="size-4" />],
+            ['janela', 'Janela', <Janela key="janela" className="size-4" />],
+          ] as const
+        ).map(([id, rotulo, icone]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setFerramenta(id)}
+            aria-pressed={ferramenta === id}
+            className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold transition ${
+              ferramenta === id ? 'bg-musgo text-linho' : 'hover:bg-creme'
+            }`}
+          >
+            {icone} {rotulo}
+          </button>
+        ))}
+      </div>
 
       <button
         type="button"
         disabled={!podeDesfazer('planta')}
         onClick={() => desfazer('planta')}
-        className="botao absolute top-4 right-4 bg-linho/90 px-4 py-2 text-xs font-bold shadow-sm backdrop-blur enabled:cursor-pointer enabled:hover:bg-linho disabled:text-tinta/35"
+        className="botao absolute top-4 right-4 bg-linho/90 px-3 py-2.5 text-xs sm:px-4 sm:py-2 font-bold shadow-sm backdrop-blur enabled:cursor-pointer enabled:hover:bg-linho disabled:text-tinta/35"
       >
-        <Desfazer /> Desfazer
+        <Desfazer /> <span className="max-sm:sr-only">Desfazer</span>
       </button>
 
-      {porta ? (
-        <div className="absolute inset-x-4 bottom-4 mx-auto flex max-w-md items-center gap-2 rounded-full bg-linho p-1.5 pl-5 shadow-xl animar-surgir">
-          <Porta className="size-4 shrink-0 text-terracota" />
-          <span className="text-sm font-bold">Porta</span>
+      {ativa ? (
+        <div className="absolute inset-x-4 bottom-4 mx-auto flex max-w-md items-center gap-2 rounded-full bg-linho p-1.5 pl-4 shadow-xl animar-surgir sm:pl-5">
+          {porta ? <Porta className="size-4 shrink-0 text-terracota" /> : <Janela className="size-4 shrink-0 text-terracota" />}
+          <span className="text-sm font-bold max-[359px]:sr-only">{porta ? 'Porta' : 'Janela'}</span>
           <div className="ml-auto flex items-center gap-1 rounded-full bg-creme p-1">
-            <BotaoRedondo rotulo="Diminuir porta" onClick={() => mudarPorta(porta.largura - 10)}>
+            <BotaoRedondo rotulo="Diminuir largura" onClick={() => mudarLargura(ativa.largura - 10)}>
               <Menos />
             </BotaoRedondo>
-            <span className="w-14 text-center text-sm font-bold tabular-nums">{porta.largura} cm</span>
-            <BotaoRedondo rotulo="Aumentar porta" onClick={() => mudarPorta(porta.largura + 10)}>
+            <span className="w-14 text-center text-sm font-bold tabular-nums">{ativa.largura} cm</span>
+            <BotaoRedondo rotulo="Aumentar largura" onClick={() => mudarLargura(ativa.largura + 10)}>
               <Mais />
             </BotaoRedondo>
           </div>
           <button
             type="button"
-            onClick={() => {
-              definirPlanta({ ...planta, portas: planta.portas.filter((p) => p.id !== porta.id) })
-              setPortaAtiva(null)
-            }}
-            className="botao cursor-pointer bg-tinta px-4 py-2.5 text-xs text-linho hover:bg-tinta/85"
+            onClick={removerAtiva}
+            className="botao cursor-pointer bg-tinta px-3.5 py-2.5 text-xs text-linho hover:bg-tinta/85 sm:px-4"
           >
-            <Lixeira /> Remover
+            <Lixeira /> <span className="max-[399px]:sr-only">Remover</span>
           </button>
         </div>
       ) : (
-        <div className="pointer-events-none absolute bottom-4 left-4 flex items-center gap-4 rounded-full bg-linho/90 px-4 py-2 text-xs font-bold shadow-sm backdrop-blur">
+        <div className="pointer-events-none absolute right-4 bottom-4 left-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-2xl bg-linho/90 px-4 py-2 text-xs font-bold shadow-sm backdrop-blur sm:right-auto sm:rounded-full">
           <span className="flex items-center gap-1.5">
             <span className="size-3 rounded-full border-2 border-tinta bg-linho" /> Canto
           </span>
@@ -336,6 +416,9 @@ export function EditorPlanta({ planta }: { planta: Planta }) {
           </span>
           <span className="flex items-center gap-1.5">
             <Porta className="size-3.5" /> Porta
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Janela className="size-3.5" /> Janela
           </span>
         </div>
       )}

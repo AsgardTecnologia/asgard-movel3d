@@ -1,5 +1,5 @@
 import type { ModelViewerElement } from '@google/model-viewer'
-import { useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
 import { CardMovel } from '../components/CardMovel'
 import { FotoMovel } from '../components/FotoMovel'
 import { Camera, Conversa, Cubo, Escudo, Paleta, Planta, Sacola, Seta, Voltar } from '../components/Icones'
@@ -10,9 +10,13 @@ import { Visualizador3D } from '../components/Visualizador3D'
 import { empresa } from '../config'
 import { buscarMovel, categorias, foto, moveis, type Categoria } from '../data/moveis'
 import { abrirPainel, personalizada, temNomeProprio, useMarca } from '../lib/marca'
+import { totem } from '../lib/totem'
 import { hrefAmbiente, hrefMovel, hrefSecao } from '../router'
 
-type Filtro = Categoria | 'Todos'
+type Filtro = Categoria | 'Todos' | 'Pisos' | 'Paredes'
+
+// Pisos e paredes desenham as texturas com o three.js: só baixa quando a pessoa abre a aba.
+const CatalogoAcabamentos = lazy(() => import('../components/CatalogoAcabamentos'))
 
 export function Inicio() {
   const [filtro, setFiltro] = useState<Filtro>('Todos')
@@ -21,6 +25,9 @@ export function Inicio() {
     setFiltro(c)
     document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  // No totem da loja, o início é o catálogo: a apresentação do produto é para o lojista, não para o cliente.
+  if (totem) return <Catalogo filtro={filtro} setFiltro={setFiltro} />
 
   return (
     <>
@@ -355,18 +362,20 @@ function Categorias({ onEscolher }: { onEscolher: (c: Categoria) => void }) {
 
 function Catalogo({ filtro, setFiltro }: { filtro: Filtro; setFiltro: (f: Filtro) => void }) {
   const lista = filtro === 'Todos' ? moveis : moveis.filter((m) => m.categoria === filtro)
+  const acabamento = filtro === 'Pisos' ? 'piso' : filtro === 'Paredes' ? 'parede' : null
   const marca = useMarca()
   const proprio = temNomeProprio(marca)
 
   return (
     <section id="catalogo" className="scroll-mt-20 bg-creme py-14 md:py-28">
       <div className={container}>
-        <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-          <Titulo eyebrow={proprio ? `Catálogo ${marca.nome}` : 'Demonstração ao vivo'}>
-            Experimente como seu cliente.
+        {/* Os filtros só cabem ao lado do título em telas bem largas; antes disso ficam embaixo e rolam na horizontal. */}
+        <div className="flex flex-col justify-between gap-8 2xl:flex-row 2xl:items-end totem:flex-col totem:items-start">
+          <Titulo eyebrow={proprio || totem ? `Catálogo ${marca.nome}` : 'Demonstração ao vivo'}>
+            {totem ? 'Experimente antes de comprar.' : 'Experimente como seu cliente.'}
           </Titulo>
-          <div className="flex gap-1 overflow-x-auto rounded-full bg-linho p-1 lg:shrink-0">
-            {(['Todos', ...categorias] as const).map((c) => (
+          <div className="flex max-w-full gap-1 self-start overflow-x-auto rounded-full bg-linho p-1 [scrollbar-width:none] 2xl:shrink-0 2xl:self-auto [&::-webkit-scrollbar]:hidden totem:flex-wrap totem:rounded-[28px] totem:p-2">
+            {(['Todos', ...categorias, 'Pisos', 'Paredes'] as const).map((c) => (
               <button
                 key={c}
                 type="button"
@@ -380,14 +389,32 @@ function Catalogo({ filtro, setFiltro }: { filtro: Filtro; setFiltro: (f: Filtro
             ))}
           </div>
         </div>
-        <p className="mt-6 max-w-lg text-pedra">
-          {proprio ? `Este seria o catálogo da loja ${marca.nome}, com peças de exemplo` : 'Este é um catálogo de exemplo'},
-          funcionando de verdade. Troque as cores, abra uma peça com o selo 3D · RA, gire em 360° e toque em “Ver no meu
-          espaço”. Ou toque em “Ambiente” no card para montar um cômodo com as peças: é exatamente isso que o seu site
-          vai ter.
-        </p>
+        {acabamento ? (
+          <p className="mt-6 max-w-lg text-pedra">
+            {acabamento === 'piso'
+              ? 'Escolha o piso e a cor e toque em “Provar este piso no meu espaço”: no celular, ele aparece no chão de verdade, em tamanho real. Ou veja como fica num ambiente 3D.'
+              : 'Escolha o revestimento e a cor e toque em “Provar nesta parede”: no celular, ele aparece na sua parede, em tamanho real. Ou veja como fica num ambiente 3D.'}
+          </p>
+        ) : totem ? (
+          <p className="mt-6 max-w-2xl text-lg text-pedra">
+            Toque numa peça para ver em 3D e trocar a cor, ou em “Ambiente” para montar o seu cômodo com ela. Pisos e paredes
+            também: escolha e veja como ficam.
+          </p>
+        ) : (
+          <p className="mt-6 max-w-lg text-pedra">
+            {proprio ? `Este seria o catálogo da loja ${marca.nome}, com peças de exemplo` : 'Este é um catálogo de exemplo'},
+            funcionando de verdade. Troque as cores, abra uma peça com o selo 3D · RA, gire em 360° e toque em “Ver no meu
+            espaço”. Ou toque em “Ambiente” no card para montar um cômodo com as peças. Pisos e paredes também dá para provar
+            em realidade aumentada.
+          </p>
+        )}
 
-        <div className="mt-10 grid grid-flow-row-dense grid-cols-1 gap-x-6 gap-y-10 sm:mt-12 sm:gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+        {acabamento ? (
+          <Suspense fallback={<div className="mt-12 h-[480px] animate-pulse rounded-[20px] bg-linho" />}>
+            <CatalogoAcabamentos key={acabamento} superficie={acabamento} />
+          </Suspense>
+        ) : (
+        <div className="mt-10 grid grid-flow-row-dense grid-cols-1 gap-x-6 gap-y-10 sm:mt-12 sm:gap-y-12 sm:grid-cols-2 lg:grid-cols-3 totem-v:grid-cols-2 totem-h:grid-cols-3">
           {lista.map((m) => {
             const largo = m.formato === 'largo'
             return (
@@ -397,6 +424,7 @@ function Catalogo({ filtro, setFiltro }: { filtro: Filtro; setFiltro: (f: Filtro
             )
           })}
         </div>
+        )}
       </div>
     </section>
   )
@@ -557,7 +585,7 @@ function Experiencia() {
       <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
         <div className="relative aspect-square overflow-hidden rounded-[28px] sm:aspect-[4/3]">
           <Visualizador3D movel={peca} cor={0} refViewer={viewer} />
-          <div className="pointer-events-none absolute top-5 left-5 inline-flex items-center gap-2 rounded-full bg-linho px-4 py-2 text-xs font-bold shadow-lg">
+          <div className="pointer-events-none absolute top-4 left-4 inline-flex max-w-[calc(100%-2rem)] items-center gap-2 rounded-full bg-linho px-4 py-2 text-xs font-bold shadow-lg sm:top-5 sm:left-5">
             <span className="size-2 animate-pulse rounded-full bg-terracota" /> Modelo real · toque nas gavetas
           </div>
           <div className="absolute right-4 bottom-4 flex items-center gap-3 rounded-2xl bg-linho/90 p-2 shadow-xl backdrop-blur-md sm:right-5 sm:bottom-5 sm:p-3">
@@ -666,7 +694,7 @@ function RealidadeAumentada() {
         <div className="relative flex justify-center py-4">
           <div
             aria-hidden
-            className="absolute top-1/2 left-1/2 size-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-areia md:size-[520px]"
+            className="absolute top-1/2 left-1/2 size-[min(440px,110vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-areia md:size-[520px]"
           />
 
           <div className="absolute top-[18%] left-0 z-10 hidden items-center gap-3 rounded-2xl bg-linho p-3 pr-5 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.3)] xl:flex">
@@ -688,7 +716,7 @@ function RealidadeAumentada() {
             </div>
           </div>
 
-          <div className="relative w-[290px] rounded-[48px] bg-tinta p-[10px] shadow-[0_50px_80px_-30px_rgba(0,0,0,0.45)] md:w-[320px]">
+          <div className="relative w-full max-w-[290px] rounded-[48px] bg-tinta p-[10px] shadow-[0_50px_80px_-30px_rgba(0,0,0,0.45)] md:max-w-[320px]">
             <div
               className="relative aspect-[9/19] overflow-hidden rounded-[38px]"
               style={{ background: 'linear-gradient(#dfd5d5 0 56%, #cfb09d 60% 100%)' }}

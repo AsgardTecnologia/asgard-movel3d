@@ -8,12 +8,17 @@ export const empresa = {
   horario: 'Seg a Sex · 9h às 18h',
 }
 
-/** Link do QR code. Aberto em localhost, troca pelo endereço público (VITE_URL_PUBLICA), que o celular alcança. */
-export const linkCelular = () => {
+/**
+ * Link do QR code. Aberto em localhost, troca pelo endereço público (VITE_URL_PUBLICA), que o celular
+ * alcança. `parametros` vão no endereço (antes do #): o que a pessoa escolheu e o pedido de abrir a RA.
+ */
+export const linkCelular = (parametros?: Record<string, string>) => {
   const { hostname, pathname, search, hash, href } = window.location
   const base = import.meta.env.VITE_URL_PUBLICA
   const local = hostname === 'localhost' || hostname === '127.0.0.1'
-  return base && local ? new URL(pathname + search + hash, base).href : href
+  const url = new URL(base && local ? new URL(pathname + search + hash, base).href : href)
+  for (const [k, v] of Object.entries(parametros ?? {})) url.searchParams.set(k, v)
+  return url.href
 }
 
 export const linkWhatsapp = (mensagem: string) =>

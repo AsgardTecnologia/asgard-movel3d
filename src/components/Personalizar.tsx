@@ -191,11 +191,11 @@ export function PainelPersonalizar() {
   return (
     <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Personalizar o site">
       <div className="absolute inset-0 bg-tinta/20" onClick={() => abrirPainel(false)} />
-      <div className="animar-surgir absolute inset-x-0 bottom-0 max-h-[88svh] overflow-y-auto rounded-t-[28px] bg-creme p-6 shadow-2xl sm:inset-y-3 sm:right-3 sm:left-auto sm:max-h-none sm:w-[440px] sm:rounded-[28px] sm:p-8">
+      <div className="animar-surgir absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[28px] bg-creme p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-2xl sm:inset-y-3 sm:right-3 sm:left-auto sm:max-h-none sm:w-[440px] sm:max-w-[calc(100vw-1.5rem)] sm:rounded-[28px] sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="eyebrow text-terracota">Personalize</p>
-            <h2 className="mt-3 text-[34px] leading-[1.05]">Veja o site com a sua marca.</h2>
+            <h2 className="mt-3 text-[28px] leading-[1.05] sm:text-[34px]">Veja o site com a sua marca.</h2>
           </div>
           <button
             type="button"
@@ -232,7 +232,7 @@ export function BotaoPersonalizar() {
     <button
       type="button"
       onClick={() => abrirPainel()}
-      className="fixed bottom-4 left-4 z-40 inline-flex cursor-pointer items-center gap-2.5 rounded-full bg-tinta py-2 pr-4 pl-2 text-xs sm:bottom-5 sm:left-5 sm:gap-3 sm:py-2.5 sm:pr-5 sm:pl-2.5 sm:text-sm font-bold text-linho shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition hover:-translate-y-0.5"
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-[max(1rem,env(safe-area-inset-left))] z-40 inline-flex cursor-pointer items-center gap-2.5 rounded-full bg-tinta py-2 pr-4 pl-2 text-xs sm:bottom-[max(1.25rem,env(safe-area-inset-bottom))] sm:left-[max(1.25rem,env(safe-area-inset-left))] sm:gap-3 sm:py-2.5 sm:pr-5 sm:pl-2.5 sm:text-sm font-bold text-linho shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] transition hover:-translate-y-0.5"
     >
       <Cores marca={marca} />
       {personalizada(marca) ? 'Editar marca' : 'Personalizar'}

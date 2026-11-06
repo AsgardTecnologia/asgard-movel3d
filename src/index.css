@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Modo totem (src/lib/totem.ts): `totem:` ganha de `lg:` etc. por ter duas classes no seletor. */
+@custom-variant totem (.totem &);
+/* Totem em pé (1080×1920) e deitado (1920×1080). */
+@custom-variant totem-v (.totem-v &);
+@custom-variant totem-h (.totem-h &);
+
 @theme {
   --color-linho: #fbf9f5;
   --color-creme: #f3eee6;
@@ -36,6 +42,34 @@
 
   ::selection {
     @apply bg-terracota text-linho;
+  }
+}
+
+/* Totem: tudo 25% maior (o que é em rem), sem seleção de texto nem menu de toque longo. */
+html.totem {
+  font-size: 125%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+@keyframes aproximar {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes pulsar {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(176 96 58 / 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 22px rgb(176 96 58 / 0);
   }
 }
 
